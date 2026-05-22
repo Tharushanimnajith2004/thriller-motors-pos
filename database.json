@@ -1,0 +1,436 @@
+{
+  "products": [
+    {
+      "id": "p1",
+      "name": "Aura Noise-Cancelling Headphones",
+      "sku": "ELE-HEAD-90",
+      "category": "Electronics",
+      "costPrice": 85,
+      "sellingPrice": 179.99,
+      "wholesalePrice": 135,
+      "pkgUnit": "Box of 6",
+      "moq": 6,
+      "stock": 35,
+      "supplier": "Apex Electronics Co.",
+      "img": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&auto=format&fit=crop&q=60"
+    },
+    {
+      "id": "p2",
+      "name": "Zenith Waterproof Smartwatch",
+      "sku": "ELE-SMAR-12",
+      "category": "Electronics",
+      "costPrice": 110,
+      "sellingPrice": 249,
+      "wholesalePrice": 190,
+      "pkgUnit": "Pack of 3",
+      "moq": 3,
+      "stock": 14,
+      "supplier": "Zenith Hardware Corp",
+      "img": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&auto=format&fit=crop&q=60"
+    },
+    {
+      "id": "p3",
+      "name": "Heritage Denim Trucker Jacket",
+      "sku": "APP-DENM-55",
+      "category": "Apparel & Fashion",
+      "costPrice": 32,
+      "sellingPrice": 89.5,
+      "wholesalePrice": 62,
+      "pkgUnit": "Carton of 10",
+      "moq": 10,
+      "stock": 45,
+      "supplier": "Heritage Fabrics Ltd",
+      "img": "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=400&auto=format&fit=crop&q=60"
+    },
+    {
+      "id": "p4",
+      "name": "Urban Canvas Travel Backpack",
+      "sku": "APP-PACK-01",
+      "category": "Apparel & Fashion",
+      "costPrice": 25,
+      "sellingPrice": 65,
+      "wholesalePrice": 45,
+      "pkgUnit": "Box of 5",
+      "moq": 5,
+      "stock": 22,
+      "supplier": "Heritage Fabrics Ltd",
+      "img": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&auto=format&fit=crop&q=60"
+    },
+    {
+      "id": "p5",
+      "name": "Nordic Minimalist Ceramic Vase",
+      "sku": "HOM-VASE-03",
+      "category": "Home & Living",
+      "costPrice": 11.5,
+      "sellingPrice": 34,
+      "wholesalePrice": 22,
+      "pkgUnit": "Box of 8",
+      "moq": 8,
+      "stock": 24,
+      "supplier": "Nordic Craft Studio",
+      "img": "https://images.unsplash.com/photo-1578500494198-246f612d3b3d?w=400&auto=format&fit=crop&q=60"
+    },
+    {
+      "id": "p6",
+      "name": "Aroma Ultrasonic Diffuser Set",
+      "sku": "HOM-AROM-88",
+      "category": "Home & Living",
+      "costPrice": 18,
+      "sellingPrice": 48,
+      "wholesalePrice": 32,
+      "pkgUnit": "Box of 6",
+      "moq": 6,
+      "stock": 3,
+      "supplier": "Nordic Craft Studio",
+      "img": "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400&auto=format&fit=crop&q=60"
+    },
+    {
+      "id": "p7",
+      "name": "Organic Ceremonial Matcha Set",
+      "sku": "BEV-MATC-07",
+      "category": "Beverages & Gourmet",
+      "costPrice": 20,
+      "sellingPrice": 45,
+      "wholesalePrice": 30,
+      "pkgUnit": "Box of 12",
+      "moq": 12,
+      "stock": 0,
+      "supplier": "Shizuoka Tea Import",
+      "img": "https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=400&auto=format&fit=crop&q=60"
+    },
+    {
+      "id": "p8",
+      "name": "Premium Single-Origin Coffee Beans",
+      "sku": "BEV-COFF-42",
+      "category": "Beverages & Gourmet",
+      "costPrice": 9,
+      "sellingPrice": 22,
+      "wholesalePrice": 15,
+      "pkgUnit": "Box of 20",
+      "moq": 20,
+      "stock": 55,
+      "supplier": "Andes Importers",
+      "img": "https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=400&auto=format&fit=crop&q=60"
+    },
+    {
+      "id": "p9",
+      "name": "Elite Adjustable Yoga Dumbbells",
+      "sku": "FIT-DUMB-22",
+      "category": "Fitness & Sports",
+      "costPrice": 15,
+      "sellingPrice": 38,
+      "wholesalePrice": 25,
+      "pkgUnit": "Pack of 4",
+      "moq": 4,
+      "stock": 18,
+      "supplier": "Vanguard Athletics",
+      "img": "https://images.unsplash.com/photo-1638536532686-d610adfc8e5c?w=400&auto=format&fit=crop&q=60"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "TX-78102",
+      "timestamp": "2026-05-17T04:57:00.241Z",
+      "customer": {
+        "name": "Aria Thorne",
+        "phone": "+1 (555) 901-2345"
+      },
+      "paymentMethod": "card",
+      "subtotal": 179.99,
+      "discountPercent": 10,
+      "discountAmount": 18,
+      "taxPercent": 8,
+      "taxAmount": 12.96,
+      "grandTotal": 174.95,
+      "profit": 89.95,
+      "items": [
+        {
+          "id": "p1",
+          "name": "Aura Noise-Cancelling Headphones",
+          "sku": "ELE-HEAD-90",
+          "qty": 1,
+          "sellingPrice": 179.99,
+          "costPrice": 85
+        }
+      ]
+    },
+    {
+      "id": "TX-78103",
+      "timestamp": "2026-05-19T09:02:00.241Z",
+      "customer": {
+        "name": "Guest Customer"
+      },
+      "paymentMethod": "cash",
+      "subtotal": 56,
+      "discountPercent": 0,
+      "discountAmount": 0,
+      "taxPercent": 8,
+      "taxAmount": 4.48,
+      "grandTotal": 60.48,
+      "profit": 26.5,
+      "items": [
+        {
+          "id": "p5",
+          "name": "Nordic Minimalist Ceramic Vase",
+          "sku": "HOM-VASE-03",
+          "qty": 1,
+          "sellingPrice": 34,
+          "costPrice": 11.5
+        },
+        {
+          "id": "p8",
+          "name": "Premium Single-Origin Coffee Beans",
+          "sku": "BEV-COFF-42",
+          "qty": 1,
+          "sellingPrice": 22,
+          "costPrice": 9
+        }
+      ]
+    },
+    {
+      "id": "TX-78104",
+      "timestamp": "2026-05-22T04:03:00.241Z",
+      "customer": {
+        "name": "Marcus Broadus",
+        "phone": "+1 (555) 789-0123"
+      },
+      "paymentMethod": "mobile",
+      "subtotal": 123.5,
+      "discountPercent": 0,
+      "discountAmount": 0,
+      "taxPercent": 8,
+      "taxAmount": 9.88,
+      "grandTotal": 133.38,
+      "profit": 60.5,
+      "items": [
+        {
+          "id": "p3",
+          "name": "Heritage Denim Trucker Jacket",
+          "sku": "APP-DENM-55",
+          "qty": 1,
+          "sellingPrice": 89.5,
+          "costPrice": 32
+        },
+        {
+          "id": "p5",
+          "name": "Nordic Minimalist Ceramic Vase",
+          "sku": "HOM-VASE-03",
+          "qty": 1,
+          "sellingPrice": 34,
+          "costPrice": 11.5
+        }
+      ]
+    }
+  ],
+  "wholesaleTransactions": [
+    {
+      "id": "W-INV-4501",
+      "timestamp": "2026-05-18T06:21:00.241Z",
+      "customer": {
+        "id": "c1",
+        "name": "Vance Tech Distributors",
+        "phone": "+1 (555) 345-6789",
+        "address": "742 Evergreen Terrace, Springfield",
+        "purchaseCount": 14,
+        "loyaltyPoints": 340,
+        "isWholesale": true,
+        "companyName": "Vance Tech Distributors",
+        "creditLimit": 10000,
+        "outstandingDebt": 2480,
+        "salesman": "Shemal"
+      },
+      "salesman": "Shemal",
+      "paymentMethod": "store-credit",
+      "subtotal": 2430,
+      "discountPercent": 5,
+      "discountAmount": 121.5,
+      "taxPercent": 8,
+      "taxAmount": 184.68,
+      "grandTotal": 2493.18,
+      "amountPaid": 13.18,
+      "outstandingBalance": 2480,
+      "profit": 1010,
+      "billingTerms": "Net 30 Account",
+      "status": "unpaid",
+      "items": [
+        {
+          "id": "p1",
+          "name": "Aura Noise-Cancelling Headphones",
+          "sku": "ELE-HEAD-90",
+          "qty": 12,
+          "sellingPrice": 135,
+          "costPrice": 85
+        },
+        {
+          "id": "p2",
+          "name": "Zenith Waterproof Smartwatch",
+          "sku": "ELE-SMAR-12",
+          "qty": 6,
+          "sellingPrice": 190,
+          "costPrice": 110
+        }
+      ]
+    },
+    {
+      "id": "W-INV-4502",
+      "timestamp": "2026-05-21T10:02:00.241Z",
+      "customer": {
+        "id": "c4",
+        "name": "Lane Boutiques LLC",
+        "phone": "+1 (555) 234-5678",
+        "address": "55 Wall Street, New York",
+        "purchaseCount": 3,
+        "loyaltyPoints": 30,
+        "isWholesale": true,
+        "companyName": "Lane Boutiques LLC",
+        "creditLimit": 5000,
+        "outstandingDebt": 0,
+        "salesman": "Kaveen"
+      },
+      "salesman": "Kaveen",
+      "paymentMethod": "bank-wire",
+      "subtotal": 1240,
+      "discountPercent": 10,
+      "discountAmount": 124,
+      "taxPercent": 8,
+      "taxAmount": 89.28,
+      "grandTotal": 1205.28,
+      "amountPaid": 1205.28,
+      "outstandingBalance": 0,
+      "profit": 520,
+      "billingTerms": "Bank Wire Transfer",
+      "status": "paid",
+      "items": [
+        {
+          "id": "p3",
+          "name": "Heritage Denim Trucker Jacket",
+          "sku": "APP-DENM-55",
+          "qty": 20,
+          "sellingPrice": 62,
+          "costPrice": 32
+        }
+      ]
+    }
+  ],
+  "customers": [
+    {
+      "id": "c1",
+      "name": "Vance Tech Distributors",
+      "phone": "+1 (555) 345-6789",
+      "address": "742 Evergreen Terrace, Springfield",
+      "purchaseCount": 14,
+      "loyaltyPoints": 340,
+      "isWholesale": true,
+      "companyName": "Vance Tech Distributors",
+      "creditLimit": 10000,
+      "outstandingDebt": 2480,
+      "salesman": "Shemal"
+    },
+    {
+      "id": "c2",
+      "name": "Broadus Imports",
+      "phone": "+1 (555) 789-0123",
+      "address": "102 Ocean Boulevard, Miami",
+      "purchaseCount": 8,
+      "loyaltyPoints": 120,
+      "isWholesale": true,
+      "companyName": "Broadus Imports",
+      "creditLimit": 0,
+      "outstandingDebt": 0,
+      "salesman": "Shemal"
+    },
+    {
+      "id": "c3",
+      "name": "Thorne Logistics",
+      "phone": "+1 (555) 901-2345",
+      "address": "88 Skyline Drive, Denver",
+      "purchaseCount": 22,
+      "loyaltyPoints": 680,
+      "isWholesale": true,
+      "companyName": "Thorne Logistics",
+      "creditLimit": 7500,
+      "outstandingDebt": 1200,
+      "salesman": "Kaveen"
+    },
+    {
+      "id": "c4",
+      "name": "Lane Boutiques LLC",
+      "phone": "+1 (555) 234-5678",
+      "address": "55 Wall Street, New York",
+      "purchaseCount": 3,
+      "loyaltyPoints": 30,
+      "isWholesale": true,
+      "companyName": "Lane Boutiques LLC",
+      "creditLimit": 5000,
+      "outstandingDebt": 0,
+      "salesman": "Kaveen"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "n1",
+      "type": "warning",
+      "title": "Low Stock Warning",
+      "msg": "Aroma Ultrasonic Diffuser Set is critically low (3 remaining).",
+      "time": "2026-05-22T15:53:22.241Z"
+    },
+    {
+      "id": "n2",
+      "type": "danger",
+      "title": "Out of Stock",
+      "msg": "Organic Ceremonial Matcha Set has sold out completely.",
+      "time": "2026-05-22T12:53:22.241Z"
+    }
+  ],
+  "cheques": [
+    {
+      "id": "chq-mock1",
+      "chequeNumber": "CHQ-702319",
+      "customer": {
+        "id": "c1",
+        "name": "Vance Tech Distributors",
+        "companyName": "Vance Tech Distributors"
+      },
+      "amount": 1000,
+      "bankName": "Sampath Bank",
+      "branchName": "Colombo 03",
+      "receivedDate": "2026-05-20",
+      "depositDate": "2026-05-24",
+      "emergencyRequestDate": "",
+      "status": "pending",
+      "invoiceId": "W-INV-4501"
+    },
+    {
+      "id": "chq-mock2",
+      "chequeNumber": "CHQ-890123",
+      "customer": {
+        "id": "c3",
+        "name": "Thorne Logistics",
+        "companyName": "Thorne Logistics"
+      },
+      "amount": 500,
+      "bankName": "Commercial Bank",
+      "branchName": "Galle Face",
+      "receivedDate": "2026-05-17",
+      "depositDate": "2026-05-21",
+      "emergencyRequestDate": "2026-05-26",
+      "status": "postponed",
+      "invoiceId": null
+    }
+  ],
+  "purchaseInvoices": [],
+  "expenses": [],
+  "employees": [],
+  "settings": {
+    "storeName": "Thriller Motors (Pvt) Ltd",
+    "currency": "RS",
+    "taxRate": 8,
+    "address": "456 Galleria Parkway, Suite 100",
+    "phone": "+1 (555) 767-7467",
+    "receiptFooter": "Thank you for choosing Thriller Motors (Pvt) Ltd! Drive safely.",
+    "lowStockLimit": 5,
+    "accentColor": "emerald",
+    "systemPassword": "Thriller123",
+    "ownerPassword": "admin123"
+  }
+}
