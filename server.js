@@ -55,9 +55,13 @@ app.post('/api/state', async (req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
-    console.log(`==========================================`);
-    console.log(`🚀 Thriller Motors POS Server is running!`);
-    console.log(`👉 Access the app at: http://localhost:${PORT}`);
-    console.log(`==========================================`);
-});
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`==========================================`);
+        console.log(`🚀 Thriller Motors POS Server is running!`);
+        console.log(`👉 Access the app at: http://localhost:${PORT}`);
+        console.log(`==========================================`);
+    });
+}
+
+module.exports = app;

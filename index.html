@@ -18,20 +18,32 @@
     
     <!-- Stylesheet -->
     <link rel="stylesheet" href="styles.css">
+
+    <!-- SweetAlert2 for Beautiful Popups -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
     <!-- LOGIN SCREEN -->
     <div id="login-screen" class="login-overlay">
+        <!-- Giant Brand Text on Left Side -->
+        <div class="login-brand-text">
+            <h1 class="brand-title">THRILLER MOTORS</h1>
+            <h3 class="brand-subtitle"><span class="brand-line">---</span> PVT LTD <span class="brand-line">---</span></h3>
+        </div>
         <div class="login-card">
             <img src="logo.png" alt="Company Logo" class="login-logo">
             <h2>Welcome Back</h2>
-            <p>Please enter your passcode to continue</p>
+            <p>Please enter your credentials to continue</p>
+            <div class="login-input-group" style="margin-bottom: 15px;">
+                <i class="fa-solid fa-user"></i>
+                <input type="text" id="login-username" placeholder="Username" autocomplete="off" autofocus>
+            </div>
             <div class="login-input-group">
                 <i class="fa-solid fa-lock"></i>
-                <input type="password" id="login-password" placeholder="Passcode" autocomplete="off" autofocus>
+                <input type="password" id="login-password" placeholder="Passcode" autocomplete="off">
             </div>
-            <button id="btn-login" class="btn btn-primary btn-block">Unlock System</button>
-            <p id="login-error" class="login-error-msg" style="display: none;">Incorrect passcode. Try again.</p>
+            <button id="btn-login" class="btn btn-primary btn-block" style="padding: 12px; font-size: 0.95rem; margin-top: 20px;">Unlock System</button>
+            <p id="login-error" class="login-error-msg" style="display: none;">Incorrect username or passcode.</p>
         </div>
     </div>
     <div class="app-container">

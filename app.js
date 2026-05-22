@@ -5,6 +5,54 @@
 // --------------------------------------------------------------------------
 // 1. Data Store & State Initialization
 // --------------------------------------------------------------------------
+
+// Override native alert to use SweetAlert2
+window.alert = function(msg) {
+    let iconType = "info";
+    let title = "Notification";
+    if (msg.includes("WARNING") || msg.includes("ERROR") || msg.includes("Failed")) {
+        iconType = "error";
+        title = "Error!";
+    } else if (msg.includes("successfully") || msg.includes("Success")) {
+        iconType = "success";
+        title = "Success!";
+    }
+    Swal.fire({
+        title: title,
+        text: msg.replace(/[\?]/g, ''),
+        icon: iconType,
+        confirmButtonColor: 'var(--primary-color)'
+    });
+};
+
+// Async Helper for Password Prompts
+async function promptOwnerPassword(msg) {
+    const { value: password } = await Swal.fire({
+        title: 'Authentication Required',
+        text: msg,
+        input: 'password',
+        inputPlaceholder: 'Enter password',
+        icon: 'lock',
+        showCancelButton: true,
+        confirmButtonColor: 'var(--primary-color)',
+        cancelButtonColor: '#ef4444'
+    });
+    return password;
+}
+
+// Async Helper for Confirmations
+async function confirmAction(text, isDanger = false) {
+    const { isConfirmed } = await Swal.fire({
+        title: 'Are you sure?',
+        text: text,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: isDanger ? '#ef4444' : 'var(--primary-color)',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, proceed!'
+    });
+    return isConfirmed;
+}
 let state = {
     isOwnerUnlocked: false,
     products: [],
@@ -302,6 +350,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const loginScreen = document.getElementById("login-screen");
     const appContainer = document.querySelector(".app-container");
     const btnLogin = document.getElementById("btn-login");
+    const loginUser = document.getElementById("login-username");
     const loginPass = document.getElementById("login-password");
     const loginError = document.getElementById("login-error");
 
@@ -311,9 +360,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         if(appContainer) appContainer.style.display = "none"; // Hide main app
         
         const handleLogin = () => {
-            const entered = loginPass.value;
+            const enteredUser = loginUser ? loginUser.value.trim() : "";
+            const enteredPass = loginPass.value;
             const currentSysPass = state.settings.systemPassword || "Thriller123";
-            if (entered === currentSysPass) {
+            
+            if (enteredUser === "Thrillermotors" && enteredPass === currentSysPass) {
                 sessionStorage.setItem("ss_logged_in", "true");
                 loginScreen.style.opacity = "0";
                 appContainer.style.display = "flex"; // Restore flex layout
@@ -321,13 +372,19 @@ document.addEventListener("DOMContentLoaded", async () => {
             } else {
                 loginError.style.display = "block";
                 loginPass.value = "";
-                loginPass.focus();
+                if(loginUser) loginUser.value = "";
+                if(loginUser) loginUser.focus();
             }
         };
 
         if(btnLogin) btnLogin.addEventListener("click", handleLogin);
         if(loginPass) {
             loginPass.addEventListener("keypress", (e) => {
+                if (e.key === "Enter") handleLogin();
+            });
+        }
+        if(loginUser) {
+            loginUser.addEventListener("keypress", (e) => {
                 if (e.key === "Enter") handleLogin();
             });
         }
@@ -3442,11 +3499,12 @@ function setupSettingsEvents() {
         }
     });
 
-    document.getElementById("btn-clear-db")?.addEventListener("click", () => {
-        const pass = prompt("Please enter the Owner Password to clear all data:");
+    document.getElementById("btn-clear-db")?.addEventListener("click", async () => {
+        const pass = await promptOwnerPassword("Please enter the Owner Password to clear all data:");
+        if (pass === null) return; // cancelled
         const currentOwnerPass = state.settings.ownerPassword || "admin123";
         if (pass === currentOwnerPass) {
-            if (confirm("WARNING: This will permanently wipe all local datasets. Are you absolutely sure?")) {
+            if (await confirmAction("WARNING: This will permanently wipe all local datasets. Are you absolutely sure?", true)) {
                 state.products = [];
                 state.transactions = [];
                 state.wholesaleTransactions = [];
@@ -4754,9 +4812,10 @@ function closeAddEmployeeModal() {
     document.getElementById("modal-add-employee")?.classList.remove("active");
 }
 
-function deleteEmployee(empId) {
-    if(confirm("Are you sure you want to delete this person? Their past expenses will remain in the log but won't be linked to them.")) {
-        const pass = prompt("Enter Owner Password to delete this person:");
+async function deleteEmployee(empId) {
+    if(await confirmAction("Are you sure you want to delete this person? Their past expenses will remain in the log but won't be linked to them.", true)) {
+        const pass = await promptOwnerPassword("Enter Owner Password to delete this person:");
+        if (pass === null) return;
         const currentOwnerPass = state.settings.ownerPassword || "admin123";
         if (pass === currentOwnerPass) {
             state.employees = state.employees.filter(e => e.id !== empId);
@@ -4768,9 +4827,10 @@ function deleteEmployee(empId) {
     }
 }
 
-function clearExpensesHistory() {
-    if(confirm("WARNING: This will permanently delete all expense logs. Total balances will be reset. Are you absolutely sure?")) {
-        const pass = prompt("Enter Owner Password to clear expenses:");
+async function clearExpensesHistory() {
+    if(await confirmAction("WARNING: This will permanently delete all expense logs. Total balances will be reset. Are you absolutely sure?", true)) {
+        const pass = await promptOwnerPassword("Enter Owner Password to clear expenses:");
+        if (pass === null) return;
         const currentOwnerPass = state.settings.ownerPassword || "admin123";
         if (pass === currentOwnerPass) {
             state.expenses = [];
@@ -4783,9 +4843,10 @@ function clearExpensesHistory() {
     }
 }
 
-function deleteSingleExpense(expId) {
-    if(confirm("Are you sure you want to delete this specific expense record?")) {
-        const pass = prompt("Enter Owner Password to delete this expense:");
+async function deleteSingleExpense(expId) {
+    if(await confirmAction("Are you sure you want to delete this specific expense record?", true)) {
+        const pass = await promptOwnerPassword("Enter Owner Password to delete this expense:");
+        if (pass === null) return;
         const currentOwnerPass = state.settings.ownerPassword || "admin123";
         if (pass === currentOwnerPass) {
             state.expenses = state.expenses.filter(e => e.id !== expId);
@@ -4874,48 +4935,48 @@ function closePasswordsModal() {
     document.getElementById("modal-passwords").classList.remove("active");
 }
 
-function changeSystemPassword() {
-    const input = document.getElementById("input-system-password");
-    if (!input) return;
-    
-    const newPass = input.value.trim();
-    if (newPass.length < 3) {
+async function changeSystemPassword() {
+    const pwdInput = document.getElementById("system-pwd-input");
+    const newPwd = pwdInput.value.trim();
+
+    if (newPwd.length < 3) {
         alert("Password must be at least 3 characters long.");
         return;
     }
+
+    // Verify current owner password before changing
+    const check = await promptOwnerPassword("Enter Dashboard Login Password to verify this change:");
+    if (check === null) return;
     
-    const currentOwnerPass = state.settings.ownerPassword || "admin123";
-    const check = prompt("Enter Dashboard Login Password to verify this change:");
-    if (check === currentOwnerPass) {
-        state.settings.systemPassword = newPass;
+    if (check === state.settings.ownerPassword) {
+        state.settings.systemPassword = newPwd;
         saveStateToServer();
-        input.value = "";
-        triggerNotification("success", "Password Updated", "Main System Login password changed successfully.");
         alert("Main System Login Password updated successfully!");
-    } else if (check !== null) {
+        pwdInput.value = "";
+    } else {
         alert("Incorrect Owner password! Action denied.");
     }
 }
 
-function changeOwnerPassword() {
-    const input = document.getElementById("input-owner-password");
-    if (!input) return;
-    
-    const newPass = input.value.trim();
-    if (newPass.length < 3) {
+async function changeOwnerPassword() {
+    const pwdInput = document.getElementById("owner-pwd-input");
+    const newPwd = pwdInput.value.trim();
+
+    if (newPwd.length < 3) {
         alert("Password must be at least 3 characters long.");
         return;
     }
-    
-    const currentOwnerPass = state.settings.ownerPassword || "admin123";
-    const check = prompt("Enter CURRENT Owner Password to verify:");
-    if (check === currentOwnerPass) {
-        state.settings.ownerPassword = newPass;
+
+    // Verify current owner password before changing
+    const check = await promptOwnerPassword("Enter CURRENT Owner Password to verify:");
+    if (check === null) return;
+
+    if (check === state.settings.ownerPassword) {
+        state.settings.ownerPassword = newPwd;
         saveStateToServer();
-        input.value = "";
-        triggerNotification("success", "Password Updated", "Owner password changed successfully.");
         alert("Owner Password updated successfully!");
-    } else if (check !== null) {
+        pwdInput.value = "";
+    } else {
         alert("Incorrect current password! Action denied.");
     }
 }
