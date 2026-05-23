@@ -302,12 +302,10 @@ async function loadStateFromServer() {
                 state.settings.receiptFooter = "Thank you for choosing Thriller Motors (Pvt) Ltd! Drive safely.";
             }
         } else {
-            console.log("No existing state on server, generating demo data...");
-            generateDemoData();
+            console.log("No existing state on server, starting with empty state.");
         }
     } catch (e) {
-        console.error("Server Fetch error. Re-populating data.", e);
-        generateDemoData();
+        console.error("Server Fetch error:", e);
     }
 }
 
