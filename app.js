@@ -311,7 +311,7 @@ async function loadStateFromServer() {
 
 async function saveStateToServer() {
     try {
-        await fetch('/api/state', {
+        const response = await fetch('/api/state', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -330,7 +330,13 @@ async function saveStateToServer() {
                 settings: state.settings
             })
         });
+        if (!response.ok) {
+            const errData = await response.json().catch(()=>({}));
+            alert("Database Error! Failed to save. " + (errData.message || response.statusText));
+            console.error("Save Error Response:", errData);
+        }
     } catch (err) {
+        alert("Network Error! Could not connect to the server.");
         console.error("Failed to save state to server:", err);
     }
 }
