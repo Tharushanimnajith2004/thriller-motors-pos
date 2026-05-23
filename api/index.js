@@ -17,15 +17,17 @@ let isConnected = false;
 async function connectDB() {
     if (isConnected) return;
     try {
+        if (!process.env.MONGODB_URI) {
+            throw new Error("MONGODB_URI environment variable is missing in Vercel!");
+        }
         const db = await mongoose.connect(process.env.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
             serverSelectionTimeoutMS: 5000
         });
         isConnected = db.connections[0].readyState;
         console.log("✅ Connected to MongoDB successfully.");
     } catch (err) {
         console.error("❌ MongoDB connection error:", err);
+        throw err; // Throw it so the endpoint catches it
     }
 }
 
@@ -60,7 +62,7 @@ app.post('/api/state', async (req, res) => {
         res.json({ message: "State saved successfully" });
     } catch (err) {
         console.error("Error saving state:", err);
-        res.status(500).json({ message: "Failed to save state" });
+        res.status(500).json({ message: err.message || "Failed to save state" });
     }
 });
 
