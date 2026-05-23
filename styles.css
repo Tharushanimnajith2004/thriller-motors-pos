@@ -137,7 +137,7 @@ h1, h2, h3, h4, h5, h6, .brand-name {
    3. Main Application Layout & Sidebar
    -------------------------------------------------------------------------- */
 .app-container {
-    display: flex;
+    display: none; /* Hidden by default to prevent FOUC before login */
     width: 100%;
     height: 100vh;
     overflow: hidden;
