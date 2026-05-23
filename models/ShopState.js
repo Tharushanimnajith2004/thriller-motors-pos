@@ -11,6 +11,7 @@ const shopStateSchema = new mongoose.Schema({
     purchaseInvoices: { type: mongoose.Schema.Types.Mixed, default: [] },
     expenses: { type: mongoose.Schema.Types.Mixed, default: [] },
     employees: { type: mongoose.Schema.Types.Mixed, default: [] },
+    categories: { type: mongoose.Schema.Types.Mixed, default: [] },
     settings: { type: mongoose.Schema.Types.Mixed, default: {} }
 }, { minimize: false, timestamps: true });
 

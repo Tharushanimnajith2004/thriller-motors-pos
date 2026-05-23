@@ -276,7 +276,7 @@ function generateDemoData() {
 
 async function loadStateFromServer() {
     try {
-        const response = await fetch('/api/state');
+        const response = await fetch('/api/state', { cache: 'no-store' });
         if (response.ok) {
             const parsed = await response.json();
             state.products = parsed.products || [];
@@ -328,6 +328,7 @@ async function saveStateToServer() {
                 purchaseInvoices: state.purchaseInvoices,
                 expenses: state.expenses,
                 employees: state.employees,
+                categories: state.categories,
                 settings: state.settings
             })
         });
