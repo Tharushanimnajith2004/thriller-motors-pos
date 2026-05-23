@@ -13,19 +13,28 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' })); 
 app.use(express.static(path.join(__dirname, '..'))); 
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => {
-    console.log("✅ Connected to MongoDB successfully.");
-}).catch((err) => {
-    console.error("❌ MongoDB connection error:", err);
-});
+let isConnected = false;
+async function connectDB() {
+    if (isConnected) return;
+    try {
+        const db = await mongoose.connect(process.env.MONGODB_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 5000
+        });
+        isConnected = db.connections[0].readyState;
+        console.log("✅ Connected to MongoDB successfully.");
+    } catch (err) {
+        console.error("❌ MongoDB connection error:", err);
+    }
+}
 
 // --- API Endpoints ---
 
 // Get State
 app.get('/api/state', async (req, res) => {
     try {
+        await connectDB();
         const state = await ShopState.findOne({ singletonId: 'main_shop_state' });
         if (state) {
             res.json(state);
@@ -41,6 +50,7 @@ app.get('/api/state', async (req, res) => {
 // Save State
 app.post('/api/state', async (req, res) => {
     try {
+        await connectDB();
         const updateData = req.body;
         await ShopState.findOneAndUpdate(
             { singletonId: 'main_shop_state' },
