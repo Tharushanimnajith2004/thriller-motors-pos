@@ -359,8 +359,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const loginPass = document.getElementById("login-password");
     const loginError = document.getElementById("login-error");
 
-    if (sessionStorage.getItem("ss_logged_in") === "true") {
+    if (sessionStorage.getItem("ss_logged_in") === "true" || localStorage.getItem("thriller_motors_logged_in") === "true") {
         if(loginScreen) loginScreen.style.display = "none";
+        if(appContainer) appContainer.style.display = "flex";
     } else {
         if(appContainer) appContainer.style.display = "none"; // Hide main app
         
