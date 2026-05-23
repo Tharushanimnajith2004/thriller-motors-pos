@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://thriller-motors-pos.vercel.app/sitemap.xml
