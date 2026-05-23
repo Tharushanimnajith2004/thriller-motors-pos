@@ -2582,3 +2582,130 @@ button.swal2-cancel:hover {
     background: #334155 !important;
     transform: translateY(-2px) !important;
 }
+
+/* --------------------------------------------------------------------------
+   RESPONSIVE DESIGN (Mobile & Tablet)
+   -------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+    .dashboard-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .pos-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Main Layout */
+    .app-container {
+        flex-direction: column !important;
+    }
+    
+    /* Mobile Sidebar Navigation */
+    .sidebar {
+        width: 100% !important;
+        height: auto !important;
+        display: flex !important;
+        flex-direction: row !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        padding: 5px !important;
+        border-right: none !important;
+        border-bottom: 1px solid var(--border-color) !important;
+        z-index: 100 !important;
+    }
+    
+    .sidebar-header, .sidebar-footer {
+        display: none !important;
+    }
+    
+    .sidebar-nav {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 5px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    .nav-item {
+        padding: 10px 15px !important;
+        margin-bottom: 0 !important;
+        white-space: nowrap !important;
+        flex-direction: row !important;
+        justify-content: center !important;
+    }
+    
+    .nav-item span {
+        display: inline-block !important;
+        margin-left: 8px !important;
+    }
+    
+    /* Login Screen Mobile */
+    .login-overlay {
+        justify-content: center !important;
+        padding-right: 0 !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 20px !important;
+    }
+    
+    .login-brand-text {
+        position: relative !important;
+        left: 0 !important;
+        text-align: center !important;
+    }
+    
+    .login-brand-text .brand-title {
+        font-size: 2.8rem !important;
+    }
+    
+    .login-brand-text .brand-subtitle {
+        font-size: 1.2rem !important;
+        justify-content: center !important;
+    }
+    
+    .login-card {
+        width: 90% !important;
+        margin: 0 !important;
+    }
+    
+    /* Content Areas */
+    .main-content {
+        padding: 15px !important;
+    }
+    
+    .dashboard-cards {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .section-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 15px !important;
+    }
+    
+    .search-bar {
+        width: 100% !important;
+    }
+    
+    .search-bar input {
+        width: 100% !important;
+    }
+    
+    .action-buttons {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .action-buttons button {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+    
+    /* Tables on Mobile */
+    .table-card {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+}
