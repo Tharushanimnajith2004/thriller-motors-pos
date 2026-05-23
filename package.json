@@ -4,8 +4,8 @@
   "description": "Premium Retail Shop Management System",
   "main": "index.html",
   "scripts": {
-    "dev": "node server.js",
-    "start": "node server.js"
+    "dev": "node api/index.js",
+    "start": "node api/index.js"
   },
   "keywords": [],
   "author": "",
