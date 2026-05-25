@@ -824,7 +824,7 @@ function renderOwnerDashboard() {
     if(elProfit) elProfit.innerText = `${state.settings.currency}${netProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     const totalStockValue = state.products.reduce((sum, p) => {
-        const qty = parseFloat(p.stockLevel) || 0;
+        const qty = parseFloat(p.stock) || 0;
         const cost = parseFloat(p.costPrice) || 0;
         return sum + (qty * cost);
     }, 0);
