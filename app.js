@@ -831,6 +831,14 @@ function renderOwnerDashboard() {
     const elStockValue = document.getElementById("owner-stat-stock-value");
     if(elStockValue) elStockValue.innerText = `${state.settings.currency}${totalStockValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+    const totalWholesaleStockValue = state.products.reduce((sum, p) => {
+        const qty = parseFloat(p.stock) || 0;
+        const wPrice = parseFloat(p.wholesalePrice) || (parseFloat(p.sellingPrice) * 0.8) || 0;
+        return sum + (qty * wPrice);
+    }, 0);
+    const elWholesaleStockValue = document.getElementById("owner-stat-wholesale-stock");
+    if(elWholesaleStockValue) elWholesaleStockValue.innerText = `${state.settings.currency}${totalWholesaleStockValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
     renderOwnerSalesChart();
 }
 
