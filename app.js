@@ -823,6 +823,14 @@ function renderOwnerDashboard() {
     if(elCreditSales) elCreditSales.innerText = `${state.settings.currency}${totalCreditSales.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     if(elProfit) elProfit.innerText = `${state.settings.currency}${netProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+    const totalStockValue = state.products.reduce((sum, p) => {
+        const qty = parseFloat(p.stockLevel) || 0;
+        const cost = parseFloat(p.costPrice) || 0;
+        return sum + (qty * cost);
+    }, 0);
+    const elStockValue = document.getElementById("owner-stat-stock-value");
+    if(elStockValue) elStockValue.innerText = `${state.settings.currency}${totalStockValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
     renderOwnerSalesChart();
 }
 
