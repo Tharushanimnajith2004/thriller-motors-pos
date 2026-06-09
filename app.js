@@ -53,6 +53,21 @@ async function confirmAction(text, isDanger = false) {
     });
     return isConfirmed;
 }
+
+function getProductStock(p) {
+    if (p.isBundle) {
+        if (!p.bundleItems || p.bundleItems.length === 0) return 0;
+        let minStock = Infinity;
+        p.bundleItems.forEach(bItem => {
+            const comp = state.products.find(prod => prod.id === bItem.id);
+            const compStock = comp ? comp.stock : 0;
+            const possibleBundles = Math.floor(compStock / bItem.qty);
+            if (possibleBundles < minStock) minStock = possibleBundles;
+        });
+        return minStock === Infinity ? 0 : minStock;
+    }
+    return p.stock || 0;
+}
 let state = {
     isOwnerUnlocked: false,
     products: [],
@@ -824,7 +839,7 @@ function renderOwnerDashboard() {
     if(elProfit) elProfit.innerText = `${state.settings.currency}${netProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     const totalStockValue = state.products.reduce((sum, p) => {
-        const qty = parseFloat(p.stock) || 0;
+        const qty = parseFloat(getProductStock(p)) || 0;
         const cost = parseFloat(p.costPrice) || 0;
         return sum + (qty * cost);
     }, 0);
@@ -832,7 +847,7 @@ function renderOwnerDashboard() {
     if(elStockValue) elStockValue.innerText = `${state.settings.currency}${totalStockValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     const totalWholesaleStockValue = state.products.reduce((sum, p) => {
-        const qty = parseFloat(p.stock) || 0;
+        const qty = parseFloat(getProductStock(p)) || 0;
         const wPrice = parseFloat(p.wholesalePrice) || (parseFloat(p.sellingPrice) * 0.8) || 0;
         return sum + (qty * wPrice);
     }, 0);
@@ -921,7 +936,7 @@ function renderDashboard() {
     const profitWholesale = state.wholesaleTransactions.reduce((sum, tx) => sum + tx.profit, 0);
     const totalProfit = profitRetail + profitWholesale;
 
-    const lowStockCount = state.products.filter(p => p.stock <= state.settings.lowStockLimit).length;
+    const lowStockCount = state.products.filter(p => getProductStock(p) <= state.settings.lowStockLimit).length;
     const totalTxCount = state.transactions.length + state.wholesaleTransactions.length;
 
     document.getElementById("stat-revenue").innerText = `${state.settings.currency}${totalRev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -952,7 +967,7 @@ function renderDashboard() {
 
     // Render Stock Alerts
     const lowStockBody = document.getElementById("dashboard-low-stock-body");
-    const lowStockList = state.products.filter(p => p.stock <= state.settings.lowStockLimit);
+    const lowStockList = state.products.filter(p => getProductStock(p) <= state.settings.lowStockLimit);
     
     if (lowStockList.length === 0) {
         lowStockBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--text-muted);"><i class="fa-solid fa-circle-check" style="font-size:24px; color:var(--success); margin-bottom:10px; display:block;"></i>All items fully stocked!</td></tr>`;
@@ -970,7 +985,7 @@ function renderDashboard() {
                             <span class="product-cell-sku">${p.sku || "N/A"}</span>
                         </div>
                     </td>
-                    <td><strong>${p.stock}</strong> units</td>
+                    <td><strong>${getProductStock(p)}</strong> units</td>
                     <td>${statusBadge}</td>
                     <td><button class="btn btn-secondary btn-xs" onclick="openRestockModal('${p.id}')">Restock</button></td>
                 </tr>
@@ -1317,11 +1332,11 @@ function renderPOSCatalog() {
     }
 
     grid.innerHTML = filteredList.map(p => {
-        let stockTag = `<span class="stock-tag">${p.stock} In Stock</span>`;
+        let stockTag = `<span class="stock-tag">${getProductStock(p)} In Stock</span>`;
         if (p.stock === 0) {
             stockTag = `<span class="stock-tag out-tag">SOLD OUT</span>`;
-        } else if (p.stock <= state.settings.lowStockLimit) {
-            stockTag = `<span class="stock-tag low-tag">${p.stock} Low Stock</span>`;
+        } else if (getProductStock(p) <= state.settings.lowStockLimit) {
+            stockTag = `<span class="stock-tag low-tag">${getProductStock(p)} Low Stock</span>`;
         }
 
         const fallbackImg = PRESET_IMAGES[p.category] || PRESET_IMAGES.Default;
@@ -1565,11 +1580,25 @@ function processCartCheckout() {
     state.cart.forEach(item => {
         const prod = state.products.find(p => p.id === item.id);
         if (prod) {
-            prod.stock = Math.max(0, prod.stock - item.qty);
-            if (prod.stock === 0) {
-                triggerNotification("danger", "Stock Depleted", `${prod.name} has sold out.`);
-            } else if (prod.stock <= state.settings.lowStockLimit) {
-                triggerNotification("warning", "Low Stock Alert", `${prod.name} has reached critical level (${prod.stock} left).`);
+            if (prod.isBundle && prod.bundleItems) {
+                prod.bundleItems.forEach(bItem => {
+                    const compProd = state.products.find(p => p.id === bItem.id);
+                    if (compProd) {
+                        compProd.stock = Math.max(0, compProd.stock - (bItem.qty * item.qty));
+                        if (compProd.stock === 0) {
+                            triggerNotification("danger", "Stock Depleted", `${compProd.name} has sold out.`);
+                        } else if (compProd.stock <= state.settings.lowStockLimit) {
+                            triggerNotification("warning", "Low Stock Alert", `${compProd.name} has reached critical level (${compProd.stock} left).`);
+                        }
+                    }
+                });
+            } else {
+                prod.stock = Math.max(0, (prod.stock || 0) - item.qty);
+                if (prod.stock === 0) {
+                    triggerNotification("danger", "Stock Depleted", `${prod.name} has sold out.`);
+                } else if (prod.stock <= state.settings.lowStockLimit) {
+                    triggerNotification("warning", "Low Stock Alert", `${prod.name} has reached critical level (${prod.stock} left).`);
+                }
             }
         }
     });
@@ -1691,11 +1720,11 @@ function renderWholesalePOSCatalog() {
         const fallbackImg = PRESET_IMAGES[p.category] || PRESET_IMAGES.Default;
         const prodImg = p.img && p.img.trim().startsWith("http") ? p.img : fallbackImg;
         
-        let stockTag = `<span class="stock-tag">${p.stock} In Stock</span>`;
+        let stockTag = `<span class="stock-tag">${getProductStock(p)} In Stock</span>`;
         if (p.stock === 0) {
             stockTag = `<span class="stock-tag out-tag">OUT OF STOCK</span>`;
-        } else if (p.stock < 1) {
-            stockTag = `<span class="stock-tag low-tag">Low Stock (${p.stock} left)</span>`;
+        } else if (getProductStock(p) < 1) {
+            stockTag = `<span class="stock-tag low-tag">Low Stock (${getProductStock(p)} left)</span>`;
         }
 
         const wholesalePrice = p.wholesalePrice || p.sellingPrice * 0.8;
@@ -1994,11 +2023,25 @@ function processWholesaleCheckout() {
     state.wholesaleCart.forEach(item => {
         const prod = state.products.find(p => p.id === item.id);
         if (prod) {
-            prod.stock = Math.max(0, prod.stock - item.qty);
-            if (prod.stock === 0) {
-                triggerNotification("danger", "Stock Depleted", `${prod.name} has sold out (Wholesale purchase).`);
-            } else if (prod.stock <= state.settings.lowStockLimit) {
-                triggerNotification("warning", "Low Stock Alert", `${prod.name} has dropped below limit (${prod.stock} remaining).`);
+            if (prod.isBundle && prod.bundleItems) {
+                prod.bundleItems.forEach(bItem => {
+                    const compProd = state.products.find(p => p.id === bItem.id);
+                    if (compProd) {
+                        compProd.stock = Math.max(0, compProd.stock - (bItem.qty * item.qty));
+                        if (compProd.stock === 0) {
+                            triggerNotification("danger", "Stock Depleted", `${compProd.name} has sold out (Wholesale purchase).`);
+                        } else if (compProd.stock <= state.settings.lowStockLimit) {
+                            triggerNotification("warning", "Low Stock Alert", `${compProd.name} has dropped below limit (${compProd.stock} remaining).`);
+                        }
+                    }
+                });
+            } else {
+                prod.stock = Math.max(0, (prod.stock || 0) - item.qty);
+                if (prod.stock === 0) {
+                    triggerNotification("danger", "Stock Depleted", `${prod.name} has sold out (Wholesale purchase).`);
+                } else if (prod.stock <= state.settings.lowStockLimit) {
+                    triggerNotification("warning", "Low Stock Alert", `${prod.name} has dropped below limit (${prod.stock} remaining).`);
+                }
             }
         }
     });
@@ -2691,7 +2734,7 @@ function getFilteredProducts() {
     }
 
     if (inventoryStockFilter === "low") {
-        list = list.filter(p => p.stock > 0 && p.stock <= state.settings.lowStockLimit);
+        list = list.filter(p => getProductStock(p) > 0 && getProductStock(p) <= state.settings.lowStockLimit);
     } else if (inventoryStockFilter === "out") {
         list = list.filter(p => p.stock === 0);
     }
@@ -2736,13 +2779,13 @@ function renderInventory() {
     tbody.innerHTML = paginated.map(p => {
         let stockBadge = `<span class="badge badge-success">Good Stock</span>`;
         let barClass = "good";
-        let stockPercent = Math.min(100, (p.stock / 25) * 100);
+        let stockPercent = Math.min(100, (getProductStock(p) / 25) * 100);
         
         if (p.stock === 0) {
             stockBadge = `<span class="badge badge-danger">Out of Stock</span>`;
             barClass = "out";
             stockPercent = 0;
-        } else if (p.stock <= state.settings.lowStockLimit) {
+        } else if (getProductStock(p) <= state.settings.lowStockLimit) {
             stockBadge = `<span class="badge badge-warning">Low Stock</span>`;
             barClass = "low";
         }
@@ -2757,7 +2800,7 @@ function renderInventory() {
             <tr>
                 <td>
                     <div class="product-info-cell">
-                        <span class="product-cell-name">${p.name}</span>
+                        <span class="product-cell-name">${p.name} ${p.isBundle ? '<span class="badge badge-primary" style="font-size:0.65rem; padding: 2px 5px; margin-left: 5px;">📦 Package</span>' : ''}</span>
                         <span class="product-cell-sku">${p.sku || "N/A"}</span>
                     </div>
                 </td>
@@ -2772,15 +2815,16 @@ function renderInventory() {
                 </td>
                 <td>${stockBadge}</td>
                 <td class="text-center">
-                    <strong>${p.stock}</strong> units
+                    <strong>${getProductStock(p)}</strong> units
                     <div class="stock-bar-container">
                         <div class="stock-bar ${barClass}" style="width: ${stockPercent}%"></div>
                     </div>
                 </td>
                 <td>
                     <div class="table-actions" style="display:flex; gap:6px;">
-                        <button class="btn btn-primary btn-icon-only btn-xs" style="background-color: var(--success); border-color: var(--success);" onclick="openRestockModal('${p.id}')" title="Add / Restock Product"><i class="fa-solid fa-boxes-packing"></i></button>
-                        <button class="btn btn-secondary btn-icon-only btn-xs" onclick="triggerEditProduct('${p.id}')" title="Edit Entry"><i class="fa-solid fa-pen-to-square"></i></button>
+                        ${!p.isBundle ? `<button class="btn btn-primary btn-icon-only btn-xs" style="background-color: var(--success); border-color: var(--success);" onclick="openRestockModal('${p.id}')" title="Add / Restock Product"><i class="fa-solid fa-boxes-packing"></i></button>` : ''}
+                        ${p.isBundle ? `<button class="btn btn-secondary btn-icon-only btn-xs" onclick="openPackageModal(state.products.find(prod => prod.id === '${p.id}'))" title="Edit Package"><i class="fa-solid fa-pen-to-square"></i></button>` 
+                        : `<button class="btn btn-secondary btn-icon-only btn-xs" onclick="triggerEditProduct('${p.id}')" title="Edit Entry"><i class="fa-solid fa-pen-to-square"></i></button>`}
                         <button class="btn btn-outline-danger btn-icon-only btn-xs" onclick="deleteProductEntry('${p.id}')" title="Delete Product"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </td>
@@ -2797,6 +2841,153 @@ function populateInventoryCategoryFilters() {
     const categories = ["all", ...new Set(state.products.map(p => p.category))];
     filter.innerHTML = categories.map(cat => `<option value="${cat}">${cat === "all" ? "All Categories" : cat}</option>`).join('');
     filter.value = currentVal;
+}
+
+let currentPackageItems = [];
+
+function openPackageModal(pkgObj = null) {
+    document.getElementById("modal-package").classList.add("active");
+    
+    const select = document.getElementById("pkg-item-select");
+    select.innerHTML = '<option value="">-- Select an item --</option>';
+    state.products.filter(p => !p.isBundle).forEach(p => {
+        select.innerHTML += `<option value="${p.id}">${p.name} (${p.sku || 'N/A'}) - Stock: ${getProductStock(p)}</option>`;
+    });
+
+    if (pkgObj) {
+        document.getElementById("package-modal-title").innerText = "Edit Package";
+        document.getElementById("pkg-id").value = pkgObj.id;
+        document.getElementById("pkg-name").value = pkgObj.name;
+        document.getElementById("pkg-sku").value = pkgObj.sku || "";
+        document.getElementById("pkg-category").value = pkgObj.category || "Package";
+        document.getElementById("pkg-supplier").value = pkgObj.supplier || "";
+        document.getElementById("pkg-cost").value = pkgObj.costPrice;
+        document.getElementById("pkg-price").value = pkgObj.sellingPrice;
+        document.getElementById("pkg-wholesale").value = pkgObj.wholesalePrice || "";
+        currentPackageItems = JSON.parse(JSON.stringify(pkgObj.bundleItems || []));
+    } else {
+        document.getElementById("package-modal-title").innerText = "Create New Package";
+        document.getElementById("pkg-id").value = "";
+        document.getElementById("pkg-name").value = "";
+        document.getElementById("pkg-sku").value = "";
+        document.getElementById("pkg-category").value = "Package";
+        document.getElementById("pkg-supplier").value = "";
+        document.getElementById("pkg-cost").value = "";
+        document.getElementById("pkg-price").value = "";
+        document.getElementById("pkg-wholesale").value = "";
+        document.getElementById("pkg-item-qty").value = "1";
+        currentPackageItems = [];
+    }
+    renderPkgItems();
+}
+
+function closePackageModal() {
+    document.getElementById("modal-package").classList.remove("active");
+}
+
+function addPkgItem() {
+    const select = document.getElementById("pkg-item-select");
+    const qtyInput = document.getElementById("pkg-item-qty");
+    const productId = select.value;
+    const qty = parseInt(qtyInput.value) || 1;
+
+    if (!productId) return alert("Please select an item to add to the package.");
+
+    const existing = currentPackageItems.find(item => item.id === productId);
+    if (existing) {
+        existing.qty += qty;
+    } else {
+        currentPackageItems.push({ id: productId, qty: qty });
+    }
+    
+    let totalCost = 0;
+    currentPackageItems.forEach(item => {
+        const p = state.products.find(prod => prod.id === item.id);
+        if (p) totalCost += (p.costPrice * item.qty);
+    });
+    document.getElementById("pkg-cost").value = totalCost;
+
+    renderPkgItems();
+    select.value = "";
+    qtyInput.value = "1";
+}
+
+function removePkgItem(productId) {
+    currentPackageItems = currentPackageItems.filter(item => item.id !== productId);
+    
+    let totalCost = 0;
+    currentPackageItems.forEach(item => {
+        const p = state.products.find(prod => prod.id === item.id);
+        if (p) totalCost += (p.costPrice * item.qty);
+    });
+    document.getElementById("pkg-cost").value = totalCost;
+    
+    renderPkgItems();
+}
+
+function renderPkgItems() {
+    const tbody = document.getElementById("pkg-items-list");
+    tbody.innerHTML = currentPackageItems.map(item => {
+        const p = state.products.find(prod => prod.id === item.id);
+        const name = p ? p.name : "Unknown Item";
+        return `
+            <tr>
+                <td>${name}</td>
+                <td>${item.qty}</td>
+                <td><button type="button" class="btn btn-sm btn-danger" onclick="removePkgItem('${item.id}')"><i class="fa-solid fa-trash"></i></button></td>
+            </tr>
+        `;
+    }).join("");
+}
+
+function savePackage() {
+    const id = document.getElementById("pkg-id").value;
+    const name = document.getElementById("pkg-name").value.trim();
+    const sku = document.getElementById("pkg-sku").value.trim();
+    const category = document.getElementById("pkg-category").value.trim();
+    const supplier = document.getElementById("pkg-supplier").value.trim();
+    const cost = parseFloat(document.getElementById("pkg-cost").value) || 0;
+    const price = parseFloat(document.getElementById("pkg-price").value) || 0;
+    const wholesalePrice = parseFloat(document.getElementById("pkg-wholesale").value) || price;
+
+    if (!name || !price) return alert("Please provide at least a Package Name and Retail Price.");
+    if (currentPackageItems.length < 2) return alert("A package must contain at least 2 items.");
+
+    if (id) {
+        const pkg = state.products.find(p => p.id === id);
+        if (pkg) {
+            pkg.name = name;
+            pkg.sku = sku;
+            pkg.category = category;
+            pkg.supplier = supplier;
+            pkg.costPrice = cost;
+            pkg.sellingPrice = price;
+            pkg.wholesalePrice = wholesalePrice;
+            pkg.bundleItems = JSON.parse(JSON.stringify(currentPackageItems));
+            triggerNotification("success", "Package Updated", `${name} package updated successfully.`);
+        }
+    } else {
+        const newPkg = {
+            id: "pkg-" + Date.now(),
+            isBundle: true,
+            bundleItems: JSON.parse(JSON.stringify(currentPackageItems)),
+            name: name,
+            sku: sku,
+            category: category,
+            supplier: supplier,
+            costPrice: cost,
+            sellingPrice: price,
+            wholesalePrice: wholesalePrice,
+            stock: 0,
+            pkgUnit: "Package"
+        };
+        state.products.push(newPkg);
+        triggerNotification("success", "Package Created", `${name} package added successfully.`);
+    }
+
+    saveStateToServer();
+    closePackageModal();
+    refreshAllViews();
 }
 
 function openProductModal(productObj = null) {
@@ -4397,7 +4588,7 @@ function initPurchaseInvoiceModule() {
                         <div style="font-size:0.7rem; color:var(--text-muted);">${p.sku || ""} ${p.category ? "· " + p.category : ""}</div>
                     </div>
                     <span style="font-size:0.72rem; background:rgba(255,255,255,0.06); border-radius:4px; padding:2px 6px; color:var(--text-muted);">
-                        Current Stock: <strong style="color:var(--primary);">${p.stock ?? 0}</strong>
+                        Current Stock: <strong style="color:var(--primary);">${getProductStock(p) ?? 0}</strong>
                     </span>
                 </div>`
             ).join('');

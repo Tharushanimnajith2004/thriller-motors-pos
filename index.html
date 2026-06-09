@@ -881,10 +881,16 @@
                         <h1>Stock & Inventory</h1>
                         <p class="subtitle">Manage products, stock alerts, and suppliers</p>
                     </div>
-                    <button class="btn btn-primary" id="btn-add-product">
-                        <i class="fa-solid fa-plus"></i>
-                        <span>Add New Product</span>
-                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="openPackageModal()">
+                            <i class="fa-solid fa-boxes-packing"></i>
+                            <span>Create Package</span>
+                        </button>
+                        <button class="btn btn-primary" id="btn-add-product">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add New Product</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Table Filters -->
@@ -1994,6 +2000,79 @@
                     <button type="submit" class="btn btn-primary" style="background-color: var(--success); border-color: var(--success);">Save Cash Settlement</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit Package Modal -->
+    <div class="modal" id="modal-package">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="package-modal-title">Create New Package</h2>
+                <button class="close-btn" onclick="closePackageModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="pkg-id">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Package Name *</label>
+                        <input type="text" id="pkg-name" placeholder="e.g. Full Service Kit" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>SKU / Code</label>
+                        <input type="text" id="pkg-sku" placeholder="PKG-001" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <input type="text" id="pkg-category" value="Package" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Supplier / Brand</label>
+                        <input type="text" id="pkg-supplier" placeholder="In-house" class="form-control">
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Package Items</h3>
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>Add Item to Package</label>
+                    <div style="display: flex; gap: 10px;">
+                        <select id="pkg-item-select" class="form-control" style="flex: 1;">
+                            <option value="">-- Select an item --</option>
+                        </select>
+                        <input type="number" id="pkg-item-qty" value="1" min="1" class="form-control" style="width: 80px;">
+                        <button type="button" class="btn btn-secondary" onclick="addPkgItem()"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+                
+                <table class="data-table small-table" style="margin-bottom: 15px;">
+                    <thead><tr><th>Item</th><th>Qty</th><th>Action</th></tr></thead>
+                    <tbody id="pkg-items-list">
+                        <!-- Items rendered here -->
+                    </tbody>
+                </table>
+
+                <h3 style="margin-top: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Pricing</h3>
+                <div class="form-row" style="margin-top: 10px;">
+                    <div class="form-group">
+                        <label>Total Cost Price</label>
+                        <input type="number" id="pkg-cost" placeholder="0.00" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Retail Price *</label>
+                        <input type="number" id="pkg-price" placeholder="0.00" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Wholesale Price</label>
+                        <input type="number" id="pkg-wholesale" placeholder="0.00" class="form-control">
+                    </div>
+                </div>
+                
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closePackageModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="savePackage()">Save Package</button>
+            </div>
         </div>
     </div>
 
