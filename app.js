@@ -1343,7 +1343,7 @@ function renderPOSCatalog() {
         const prodImg = p.img && p.img.trim().startsWith("http") ? p.img : fallbackImg;
 
         return `
-            <div class="product-card" onclick="addProductToCart('${p.id}')" style="min-height: 130px; padding-top: 35px; position: relative;">
+            <div class="product-card" onclick="addProductToCart('${p.id}')" style="min-height: 160px; padding-top: 35px; padding-bottom: 5px; position: relative;">
                 ${stockTag}
                 <div class="prod-card-details">
                     <span class="prod-card-category">${p.category}</span>
@@ -1731,7 +1731,7 @@ function renderWholesalePOSCatalog() {
         const pkgUnit = p.pkgUnit || "1 Liter";
 
         return `
-            <div class="product-card border-wholesale" onclick="addProductToWholesaleCart('${p.id}')" style="min-height: 130px; padding-top: 35px; position: relative;">
+            <div class="product-card border-wholesale" onclick="addProductToWholesaleCart('${p.id}')" style="min-height: 160px; padding-top: 35px; padding-bottom: 5px; position: relative;">
                 ${stockTag}
                 <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 5px;">
                     <span class="w-card-pkg-tag" style="background: rgba(139, 92, 246, 0.2); color: var(--purple-500); padding: 3px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600;">${pkgUnit}</span>
