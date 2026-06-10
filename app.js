@@ -839,6 +839,7 @@ function renderOwnerDashboard() {
     if(elProfit) elProfit.innerText = `${state.settings.currency}${netProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     const totalStockValue = state.products.reduce((sum, p) => {
+        if (p.isBundle) return sum;
         const qty = parseFloat(getProductStock(p)) || 0;
         const cost = parseFloat(p.costPrice) || 0;
         return sum + (qty * cost);
@@ -847,6 +848,7 @@ function renderOwnerDashboard() {
     if(elStockValue) elStockValue.innerText = `${state.settings.currency}${totalStockValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     const totalWholesaleStockValue = state.products.reduce((sum, p) => {
+        if (p.isBundle) return sum;
         const qty = parseFloat(getProductStock(p)) || 0;
         const wPrice = parseFloat(p.wholesalePrice) || (parseFloat(p.sellingPrice) * 0.8) || 0;
         return sum + (qty * wPrice);
