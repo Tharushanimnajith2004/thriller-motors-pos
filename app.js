@@ -973,7 +973,7 @@ function renderDashboard() {
         lowStockBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--text-muted);"><i class="fa-solid fa-circle-check" style="font-size:24px; color:var(--success); margin-bottom:10px; display:block;"></i>All items fully stocked!</td></tr>`;
     } else {
         lowStockBody.innerHTML = lowStockList.map(p => {
-            const statusBadge = p.stock === 0 
+            const statusBadge = getProductStock(p) === 0 
                 ? '<span class="badge badge-danger">Out of Stock</span>' 
                 : '<span class="badge badge-warning">Low Stock</span>';
             
@@ -1227,8 +1227,8 @@ function processProductRestock() {
     refreshAllViews();
     
     // Trigger real-time dashboard notifications
-    triggerNotification("success", "Stock Restocked", `${prod.name} stock increased by ${addQty} (Old: ${oldStock} -> New: ${prod.stock}).`);
-    alert(`Successfully added ${addQty} units to "${prod.name}"!\n\nOld Stock: ${oldStock}\nIncoming: ${addQty}\nNew Total Stock: ${prod.stock}`);
+    triggerNotification("success", "Stock Restocked", `${prod.name} stock increased by ${addQty} (Old: ${oldStock} -> New: ${getProductStock(prod)}).`);
+    alert(`Successfully added ${addQty} units to "${prod.name}"!\n\nOld Stock: ${oldStock}\nIncoming: ${addQty}\nNew Total Stock: ${getProductStock(prod)}`);
 }
 
 // --------------------------------------------------------------------------
@@ -1333,7 +1333,7 @@ function renderPOSCatalog() {
 
     grid.innerHTML = filteredList.map(p => {
         let stockTag = `<span class="stock-tag">${getProductStock(p)} In Stock</span>`;
-        if (p.stock === 0) {
+        if (getProductStock(p) === 0) {
             stockTag = `<span class="stock-tag out-tag">SOLD OUT</span>`;
         } else if (getProductStock(p) <= state.settings.lowStockLimit) {
             stockTag = `<span class="stock-tag low-tag">${getProductStock(p)} Low Stock</span>`;
@@ -1364,7 +1364,7 @@ function addProductToCart(productId) {
     const prod = state.products.find(p => p.id === productId);
     if (!prod) return;
 
-    if (prod.stock <= 0) {
+    if (getProductStock(prod) <= 0) {
         alert("This item is currently sold out!");
         return;
     }
@@ -1372,8 +1372,8 @@ function addProductToCart(productId) {
     const cartIdx = state.cart.findIndex(item => item.id === productId);
     if (cartIdx > -1) {
         const item = state.cart[cartIdx];
-        if (item.qty >= prod.stock) {
-            alert(`Only ${prod.stock} units are in stock!`);
+        if (item.qty >= getProductStock(prod)) {
+            alert(`Only ${getProductStock(prod)} units are in stock!`);
             return;
         }
         item.qty++;
@@ -1399,8 +1399,8 @@ function updateCartQty(idx, increment) {
     if (!prod) return;
 
     if (increment > 0) {
-        if (cartItem.qty >= prod.stock) {
-            alert(`Only ${prod.stock} units are in stock!`);
+        if (cartItem.qty >= getProductStock(prod)) {
+            alert(`Only ${getProductStock(prod)} units are in stock!`);
             return;
         }
         cartItem.qty++;
@@ -1420,9 +1420,9 @@ window.setCartQty = function(idx, val) {
     const prod = state.products.find(p => p.id === item.id);
     let qty = parseFloat(val);
     if (isNaN(qty) || qty <= 0) qty = 1;
-    if (prod && qty > prod.stock) {
-        alert(`Only ${prod.stock} units are in stock!`);
-        qty = prod.stock;
+    if (prod && qty > getProductStock(prod)) {
+        alert(`Only ${getProductStock(prod)} units are in stock!`);
+        qty = getProductStock(prod);
     }
     item.qty = qty;
     renderCartUI();
@@ -1594,10 +1594,10 @@ function processCartCheckout() {
                 });
             } else {
                 prod.stock = Math.max(0, (prod.stock || 0) - item.qty);
-                if (prod.stock === 0) {
+                if (getProductStock(prod) === 0) {
                     triggerNotification("danger", "Stock Depleted", `${prod.name} has sold out.`);
-                } else if (prod.stock <= state.settings.lowStockLimit) {
-                    triggerNotification("warning", "Low Stock Alert", `${prod.name} has reached critical level (${prod.stock} left).`);
+                } else if (getProductStock(prod) <= state.settings.lowStockLimit) {
+                    triggerNotification("warning", "Low Stock Alert", `${prod.name} has reached critical level (${getProductStock(prod)} left).`);
                 }
             }
         }
@@ -1721,7 +1721,7 @@ function renderWholesalePOSCatalog() {
         const prodImg = p.img && p.img.trim().startsWith("http") ? p.img : fallbackImg;
         
         let stockTag = `<span class="stock-tag">${getProductStock(p)} In Stock</span>`;
-        if (p.stock === 0) {
+        if (getProductStock(p) === 0) {
             stockTag = `<span class="stock-tag out-tag">OUT OF STOCK</span>`;
         } else if (getProductStock(p) < 1) {
             stockTag = `<span class="stock-tag low-tag">Low Stock (${getProductStock(p)} left)</span>`;
@@ -1755,7 +1755,7 @@ function addProductToWholesaleCart(productId) {
     const prod = state.products.find(p => p.id === productId);
     if (!prod) return;
 
-    if (prod.stock < 1) {
+    if (getProductStock(prod) < 1) {
         alert(`Product is out of stock!`);
         return;
     }
@@ -1766,8 +1766,8 @@ function addProductToWholesaleCart(productId) {
     if (cartIdx > -1) {
         const item = state.wholesaleCart[cartIdx];
         const nextQty = item.qty + 1; // increment by 1
-        if (nextQty > prod.stock) {
-            alert(`Only ${prod.stock} units are in stock! Cannot purchase more.`);
+        if (nextQty > getProductStock(prod)) {
+            alert(`Only ${getProductStock(prod)} units are in stock! Cannot purchase more.`);
             return;
         }
         item.qty = nextQty;
@@ -1798,8 +1798,8 @@ function updateWholesaleCartQty(idx, increment) {
 
     if (increment > 0) {
         const nextQty = item.qty + step;
-        if (nextQty > prod.stock) {
-            alert(`Only ${prod.stock} units are in stock!`);
+        if (nextQty > getProductStock(prod)) {
+            alert(`Only ${getProductStock(prod)} units are in stock!`);
             return;
         }
         item.qty = nextQty;
@@ -1818,9 +1818,9 @@ window.setWholesaleCartQty = function(idx, val) {
     const prod = state.products.find(p => p.id === item.id);
     let qty = parseFloat(val);
     if (isNaN(qty) || qty <= 0) qty = 1;
-    if (prod && qty > prod.stock) {
-        alert(`Only ${prod.stock} units are in stock!`);
-        qty = prod.stock;
+    if (prod && qty > getProductStock(prod)) {
+        alert(`Only ${getProductStock(prod)} units are in stock!`);
+        qty = getProductStock(prod);
     }
     item.qty = qty;
     renderWholesaleCartUI();
@@ -2037,10 +2037,10 @@ function processWholesaleCheckout() {
                 });
             } else {
                 prod.stock = Math.max(0, (prod.stock || 0) - item.qty);
-                if (prod.stock === 0) {
+                if (getProductStock(prod) === 0) {
                     triggerNotification("danger", "Stock Depleted", `${prod.name} has sold out (Wholesale purchase).`);
-                } else if (prod.stock <= state.settings.lowStockLimit) {
-                    triggerNotification("warning", "Low Stock Alert", `${prod.name} has dropped below limit (${prod.stock} remaining).`);
+                } else if (getProductStock(prod) <= state.settings.lowStockLimit) {
+                    triggerNotification("warning", "Low Stock Alert", `${prod.name} has dropped below limit (${getProductStock(prod)} remaining).`);
                 }
             }
         }
@@ -2736,7 +2736,7 @@ function getFilteredProducts() {
     if (inventoryStockFilter === "low") {
         list = list.filter(p => getProductStock(p) > 0 && getProductStock(p) <= state.settings.lowStockLimit);
     } else if (inventoryStockFilter === "out") {
-        list = list.filter(p => p.stock === 0);
+        list = list.filter(p => getProductStock(p) === 0);
     }
 
     if (inventorySearchQuery.length > 0) {
@@ -2781,7 +2781,7 @@ function renderInventory() {
         let barClass = "good";
         let stockPercent = Math.min(100, (getProductStock(p) / 25) * 100);
         
-        if (p.stock === 0) {
+        if (getProductStock(p) === 0) {
             stockBadge = `<span class="badge badge-danger">Out of Stock</span>`;
             barClass = "out";
             stockPercent = 0;
