@@ -740,6 +740,26 @@ function renderCashCreditTab() {
     `).join('');
 }
 
+function openManualCreditModal() {
+    const modal = document.getElementById("modal-manual-credit");
+    const select = document.getElementById("mc-customer");
+    if (!modal || !select) return;
+
+    // Populate dropdown
+    select.innerHTML = '<option value="">-- Choose Customer --</option>' + 
+        state.customers.map(c => `<option value="${c.id}">${c.companyName || c.name} (${c.phone || 'No phone'})</option>`).join('');
+
+    document.getElementById("mc-amount").value = "";
+    document.getElementById("mc-note").value = "";
+
+    modal.style.display = "flex";
+}
+
+function closeManualCreditModal() {
+    const modal = document.getElementById("modal-manual-credit");
+    if (modal) modal.style.display = "none";
+}
+
 function openCashCreditPaymentModal(customerId) {
     // We need to find the oldest unpaid invoice for this customer to map to the debt modal.
     // If the modal expects an invoiceId, we will pass the first one that has an outstanding balance.
@@ -5136,6 +5156,48 @@ document.addEventListener("DOMContentLoaded", () => {
         closeAddEmployeeModal();
         renderExpensesTab();
         triggerNotification("success", "Person Added", `${name} added successfully.`);
+    });
+
+    document.getElementById("form-manual-credit")?.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const custId = document.getElementById("mc-customer").value;
+        const amount = parseFloat(document.getElementById("mc-amount").value);
+        const note = document.getElementById("mc-note").value.trim() || "Manual Cash/Credit Entry";
+
+        if (!custId || isNaN(amount) || amount <= 0) return;
+
+        const customer = state.customers.find(c => c.id === custId);
+        if (!customer) return;
+
+        // Create a dummy wholesale transaction to register the debt
+        const newDebtId = `MC-${Date.now()}`;
+        state.wholesaleTransactions.push({
+            id: newDebtId,
+            timestamp: new Date().toISOString(),
+            customer: { id: customer.id, name: customer.companyName || customer.name },
+            paymentMethod: "store-credit",
+            billingTerms: "Manual Credit Issue",
+            status: "unpaid",
+            subtotal: amount,
+            grandTotal: amount,
+            outstandingBalance: amount,
+            paymentHistory: [],
+            items: [{ name: note, qty: 1, sellingPrice: amount, costPrice: 0, total: amount }],
+            profit: 0
+        });
+
+        // Update customer debt
+        customer.outstandingDebt = (customer.outstandingDebt || 0) + amount;
+        
+        // Also ensure they appear in the cash-credit tab if they didn't before
+        if (customer.accountType !== "credit" && customer.accountType !== "cash-credit") {
+            customer.accountType = "cash-credit"; 
+        }
+
+        saveStateToServer();
+        closeManualCreditModal();
+        renderCashCreditTab();
+        triggerNotification("success", "Credit Issued", `Added ${state.settings.currency}${amount.toFixed(2)} debt to ${customer.name}.`);
     });
 });
 
