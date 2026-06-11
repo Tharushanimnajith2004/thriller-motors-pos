@@ -1729,12 +1729,7 @@ function setupWholesalePOSEvents() {
 
     document.querySelectorAll('input[name="w-payment-method"]').forEach(r => {
         r.addEventListener("change", (e) => {
-            const wCashCreditDetails = document.getElementById("w-cash-credit-details");
-            if (e.target.value === "cash-credit") {
-                if (wCashCreditDetails) wCashCreditDetails.style.display = "block";
-            } else {
-                if (wCashCreditDetails) wCashCreditDetails.style.display = "none";
-            }
+            // No additional logic needed right now since cash-credit is removed
         });
     });
 
@@ -2091,20 +2086,6 @@ function processWholesaleCheckout() {
         }
         debtAdded = grandTotal;
         amountPaid = 0.00; 
-    } else if (billingType === "cash-credit") {
-        const upfront = parseFloat(document.getElementById("w-upfront-payment").value) || 0;
-        if (upfront < 0 || upfront > grandTotal) {
-            alert("Invalid upfront payment amount! Must be between 0 and the Grand Total.");
-            return;
-        }
-        debtAdded = grandTotal - upfront;
-        amountPaid = upfront;
-        
-        const available = cust.creditLimit - (cust.outstandingDebt || 0);
-        if (debtAdded > available && !cust.isWholesale) {
-            alert(`CRITICAL WARNING: This customer does not have enough credit line for the remaining balance.`);
-            return;
-        }
     } else {
         amountPaid = grandTotal; 
         debtAdded = 0.00;
@@ -2190,14 +2171,7 @@ function processWholesaleCheckout() {
 
     try {
         refreshAllViews();
-        
-        // Popup high-fidelity invoice receipt or redirect to cash-credit tab
-        if (billingType === "cash-credit") {
-            switchTab("cash-credit");
-            triggerNotification("success", "Invoice Created", "Wholesale invoice with upfront cash logged.");
-        } else {
-            viewWholesaleReceipt(wInvoiceId);
-        }
+        viewWholesaleReceipt(wInvoiceId);
     } catch (err) {
         console.error("Error updating UI after wholesale checkout:", err);
         alert("Invoice generated, but an error occurred updating the view:\n" + err.stack);
