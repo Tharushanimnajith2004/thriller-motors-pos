@@ -2,7 +2,6 @@
    PREMIUM RETAIL & WHOLESALE SHOP MANAGEMENT SYSTEM - CORE LOGIC (JS)
    ========================================================================== */
 
-// --------------------------------------------------------------------------
 // 1. Data Store & State Initialization
 // --------------------------------------------------------------------------
 
@@ -361,9 +360,65 @@ async function saveStateToServer() {
 // --------------------------------------------------------------------------
 let salesChart = null;
 
+function sanitizeState() {
+    // Fix corrupted products
+    if (state.products) {
+        state.products.forEach(p => {
+            if (p.price !== undefined && p.sellingPrice === undefined) {
+                p.sellingPrice = p.price;
+            }
+            if (p.sellingPrice === null) p.sellingPrice = 0;
+            if (p.costPrice === null) p.costPrice = 0;
+            if (p.wholesalePrice === null) p.wholesalePrice = 0;
+        });
+    }
+    // Fix corrupted customers
+    if (state.customers) {
+        state.customers.forEach(c => {
+            if (c.outstandingDebt === null) c.outstandingDebt = 0;
+            if (c.creditLimit === null) c.creditLimit = 0;
+        });
+    }
+    // Fix corrupted retail transactions
+    if (state.transactions) {
+        state.transactions.forEach(tx => {
+            if (tx.grandTotal === null) tx.grandTotal = 0;
+            if (tx.subtotal === null) tx.subtotal = 0;
+            if (tx.profit === null) tx.profit = 0;
+            if (tx.taxAmount === null) tx.taxAmount = 0;
+            if (tx.discountAmount === null) tx.discountAmount = 0;
+            if (tx.items) {
+                tx.items.forEach(item => {
+                    if (item.sellingPrice === null) item.sellingPrice = 0;
+                    if (item.costPrice === null) item.costPrice = 0;
+                });
+            }
+        });
+    }
+    // Fix corrupted wholesale transactions
+    if (state.wholesaleTransactions) {
+        state.wholesaleTransactions.forEach(tx => {
+            if (tx.grandTotal === null) tx.grandTotal = 0;
+            if (tx.subtotal === null) tx.subtotal = 0;
+            if (tx.profit === null) tx.profit = 0;
+            if (tx.taxAmount === null) tx.taxAmount = 0;
+            if (tx.discountAmount === null) tx.discountAmount = 0;
+            if (tx.amountPaid === null) tx.amountPaid = 0;
+            if (tx.outstandingBalance === null) tx.outstandingBalance = 0;
+            if (tx.items) {
+                tx.items.forEach(item => {
+                    if (item.sellingPrice === null) item.sellingPrice = 0;
+                    if (item.costPrice === null) item.costPrice = 0;
+                });
+            }
+        });
+    }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     // 1. Initial State Load
     await loadStateFromServer();
+    sanitizeState();
     renderCategoryManager();
 
     // Login Screen Logic
@@ -2145,7 +2200,7 @@ function processWholesaleCheckout() {
         }
     } catch (err) {
         console.error("Error updating UI after wholesale checkout:", err);
-        alert("Invoice generated, but an error occurred updating the view: " + err.message);
+        alert("Invoice generated, but an error occurred updating the view:\n" + err.stack);
     } finally {
         state.wholesaleCart = [];
         renderWholesaleCartUI();
