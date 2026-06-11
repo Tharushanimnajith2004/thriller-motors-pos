@@ -3792,8 +3792,12 @@ function setupSettingsEvents() {
         if (pass === null) return; // cancelled
         const currentOwnerPass = state.settings.ownerPassword || "admin123";
         if (pass === currentOwnerPass) {
-            if (await confirmAction("WARNING: This will permanently wipe all local datasets. Are you absolutely sure?", true)) {
-                state.products = [];
+            if (await confirmAction("WARNING: This will permanently wipe all local datasets EXCEPT your products. Product stock will be reset to 0. Are you absolutely sure?", true)) {
+                if (state.products) {
+                    state.products.forEach(p => {
+                        p.stock = 0;
+                    });
+                }
                 state.transactions = [];
                 state.wholesaleTransactions = [];
                 state.purchaseInvoices = [];
@@ -3804,7 +3808,7 @@ function setupSettingsEvents() {
                 state.employees = [];
                 saveStateToServer();
                 refreshAllViews();
-                alert("Database purged successfully!");
+                alert("Database purged successfully! (Products retained, stock reset to 0)");
             }
         } else if (pass !== null) {
             alert("Incorrect password. Data was not cleared.");
