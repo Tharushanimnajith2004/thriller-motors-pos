@@ -751,6 +751,11 @@ function openManualCreditModal() {
 
     document.getElementById("mc-amount").value = "";
     document.getElementById("mc-note").value = "";
+    
+    // Set default date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById("mc-date").value = today;
+    document.getElementById("mc-note").value = "";
 
     modal.style.display = "flex";
 }
@@ -5163,17 +5168,25 @@ document.addEventListener("DOMContentLoaded", () => {
         const custId = document.getElementById("mc-customer").value;
         const amount = parseFloat(document.getElementById("mc-amount").value);
         const note = document.getElementById("mc-note").value.trim() || "Manual Cash/Credit Entry";
+        const dateInput = document.getElementById("mc-date").value;
 
-        if (!custId || isNaN(amount) || amount <= 0) return;
+        if (!custId || isNaN(amount) || amount <= 0 || !dateInput) return;
 
         const customer = state.customers.find(c => c.id === custId);
         if (!customer) return;
 
         // Create a dummy wholesale transaction to register the debt
         const newDebtId = `MC-${Date.now()}`;
+        
+        // Ensure the timestamp includes the correct time or at least format as ISO
+        let transactionDate = new Date(dateInput);
+        if (isNaN(transactionDate.getTime())) {
+            transactionDate = new Date();
+        }
+
         state.wholesaleTransactions.push({
             id: newDebtId,
-            timestamp: new Date().toISOString(),
+            timestamp: transactionDate.toISOString(),
             customer: { id: customer.id, name: customer.companyName || customer.name },
             paymentMethod: "store-credit",
             billingTerms: "Manual Credit Issue",
