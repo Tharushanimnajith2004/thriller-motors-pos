@@ -1631,14 +1631,23 @@ function processCartCheckout() {
     });
 
     state.transactions.unshift(newTransaction);
-    state.cart = [];
+    
     if (document.getElementById("cart-discount-input")) {
         document.getElementById("cart-discount-input").value = 0;
     }
     
     saveStateToServer();
-    refreshAllViews();
-    viewReceipt(receiptId);
+
+    try {
+        refreshAllViews();
+        viewReceipt(receiptId);
+    } catch (err) {
+        console.error("Error updating UI after retail checkout:", err);
+        alert("Transaction completed, but an error occurred updating the view: " + err.message);
+    } finally {
+        state.cart = [];
+        renderCartUI();
+    }
 }
 
 // --------------------------------------------------------------------------
@@ -1978,7 +1987,7 @@ function updateB2BCreditDisplay() {
 // B2B CREDIT CHECKOUT ENGINE
 function processWholesaleCheckout() {
     if (state.wholesaleCart.length === 0) {
-        alert("The wholesale cart is empty!");
+        alert("DIAGNOSTIC: The wholesale cart is empty!");
         return;
     }
 
@@ -2117,21 +2126,29 @@ function processWholesaleCheckout() {
     };
 
     state.wholesaleTransactions.unshift(newInvoice);
-    state.wholesaleCart = [];
+
     if (document.getElementById("w-cart-discount-input")) {
         document.getElementById("w-cart-discount-input").value = 0;
     }
 
     saveStateToServer();
-    refreshAllViews();
-    
-    // Popup high-fidelity invoice receipt or redirect to cash-credit tab
-    if (billingType === "cash-credit") {
-        switchTab("cash-credit");
-        // Optionally still show receipt? The user specifically asked to go to the cash credit page.
-        triggerNotification("success", "Invoice Created", "Wholesale invoice with upfront cash logged.");
-    } else {
-        viewWholesaleReceipt(wInvoiceId);
+
+    try {
+        refreshAllViews();
+        
+        // Popup high-fidelity invoice receipt or redirect to cash-credit tab
+        if (billingType === "cash-credit") {
+            switchTab("cash-credit");
+            triggerNotification("success", "Invoice Created", "Wholesale invoice with upfront cash logged.");
+        } else {
+            viewWholesaleReceipt(wInvoiceId);
+        }
+    } catch (err) {
+        console.error("Error updating UI after wholesale checkout:", err);
+        alert("Invoice generated, but an error occurred updating the view: " + err.message);
+    } finally {
+        state.wholesaleCart = [];
+        renderWholesaleCartUI();
     }
 }
 
