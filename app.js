@@ -367,30 +367,32 @@ function sanitizeState() {
             if (p.price !== undefined && p.sellingPrice === undefined) {
                 p.sellingPrice = p.price;
             }
-            if (p.sellingPrice === null) p.sellingPrice = 0;
-            if (p.costPrice === null) p.costPrice = 0;
-            if (p.wholesalePrice === null) p.wholesalePrice = 0;
+            p.sellingPrice = Number(p.sellingPrice) || 0;
+            p.costPrice = Number(p.costPrice) || 0;
+            p.wholesalePrice = Number(p.wholesalePrice) || 0;
         });
     }
     // Fix corrupted customers
     if (state.customers) {
         state.customers.forEach(c => {
-            if (c.outstandingDebt === null) c.outstandingDebt = 0;
-            if (c.creditLimit === null) c.creditLimit = 0;
+            c.outstandingDebt = Number(c.outstandingDebt) || 0;
+            c.creditLimit = Number(c.creditLimit) || 0;
         });
     }
     // Fix corrupted retail transactions
     if (state.transactions) {
         state.transactions.forEach(tx => {
-            if (tx.grandTotal === null) tx.grandTotal = 0;
-            if (tx.subtotal === null) tx.subtotal = 0;
-            if (tx.profit === null) tx.profit = 0;
-            if (tx.taxAmount === null) tx.taxAmount = 0;
-            if (tx.discountAmount === null) tx.discountAmount = 0;
+            tx.grandTotal = Number(tx.grandTotal) || 0;
+            tx.subtotal = Number(tx.subtotal) || 0;
+            tx.profit = Number(tx.profit) || 0;
+            tx.taxAmount = Number(tx.taxAmount) || 0;
+            tx.discountAmount = Number(tx.discountAmount) || 0;
+            tx.amountPaid = Number(tx.amountPaid) || 0;
+            tx.outstandingBalance = Number(tx.outstandingBalance) || 0;
             if (tx.items) {
                 tx.items.forEach(item => {
-                    if (item.sellingPrice === null) item.sellingPrice = 0;
-                    if (item.costPrice === null) item.costPrice = 0;
+                    item.sellingPrice = Number(item.sellingPrice) || 0;
+                    item.costPrice = Number(item.costPrice) || 0;
                 });
             }
         });
@@ -398,17 +400,17 @@ function sanitizeState() {
     // Fix corrupted wholesale transactions
     if (state.wholesaleTransactions) {
         state.wholesaleTransactions.forEach(tx => {
-            if (tx.grandTotal === null) tx.grandTotal = 0;
-            if (tx.subtotal === null) tx.subtotal = 0;
-            if (tx.profit === null) tx.profit = 0;
-            if (tx.taxAmount === null) tx.taxAmount = 0;
-            if (tx.discountAmount === null) tx.discountAmount = 0;
-            if (tx.amountPaid === null) tx.amountPaid = 0;
-            if (tx.outstandingBalance === null) tx.outstandingBalance = 0;
+            tx.grandTotal = Number(tx.grandTotal) || 0;
+            tx.subtotal = Number(tx.subtotal) || 0;
+            tx.profit = Number(tx.profit) || 0;
+            tx.taxAmount = Number(tx.taxAmount) || 0;
+            tx.discountAmount = Number(tx.discountAmount) || 0;
+            tx.amountPaid = Number(tx.amountPaid) || 0;
+            tx.outstandingBalance = Number(tx.outstandingBalance) || 0;
             if (tx.items) {
                 tx.items.forEach(item => {
-                    if (item.sellingPrice === null) item.sellingPrice = 0;
-                    if (item.costPrice === null) item.costPrice = 0;
+                    item.sellingPrice = Number(item.sellingPrice) || 0;
+                    item.costPrice = Number(item.costPrice) || 0;
                 });
             }
         });
