@@ -2709,27 +2709,40 @@ function processDebtRepayment() {
             if (!validateAndPushCheque(idField, cust, collectAmount)) return;
         }
 
-        // Distribute payment across unpaid transactions
-        let remainingToCollect = collectAmount;
-        const unpaidTxs = state.wholesaleTransactions.filter(t => t.customer?.id === customerId && t.outstandingBalance > 0);
-        unpaidTxs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        // Distribute payment across unpaid transactions ONLY if it's not cash-credit
+        if (paymentMethod !== "cash-credit") {
+            let remainingToCollect = collectAmount;
+            const unpaidTxs = state.wholesaleTransactions.filter(t => t.customer?.id === customerId && t.outstandingBalance > 0);
+            unpaidTxs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-        for (let t of unpaidTxs) {
-            if (remainingToCollect <= 0) break;
-            const deduction = Math.min(remainingToCollect, t.outstandingBalance);
-            t.outstandingBalance -= deduction;
-            t.amountPaid += deduction;
-            t.paymentHistory = t.paymentHistory || [];
-            t.paymentHistory.push({
-                date: paymentDate,
-                amount: deduction,
-                method: paymentMethod
-            });
-            if (t.outstandingBalance === 0) t.status = "paid";
-            remainingToCollect -= deduction;
+            for (let t of unpaidTxs) {
+                if (remainingToCollect <= 0) break;
+                const deduction = Math.min(remainingToCollect, t.outstandingBalance);
+                t.outstandingBalance -= deduction;
+                t.amountPaid += deduction;
+                t.paymentHistory = t.paymentHistory || [];
+                t.paymentHistory.push({
+                    date: paymentDate,
+                    amount: deduction,
+                    method: paymentMethod
+                });
+                if (t.outstandingBalance === 0) t.status = "paid";
+                remainingToCollect -= deduction;
+            }
+
+            cust.outstandingDebt = Math.max(0, (cust.outstandingDebt || 0) - collectAmount);
+        } else {
+            // Log as cash credit agreement without deducting
+            const unpaidTxs = state.wholesaleTransactions.filter(t => t.customer?.id === customerId && t.outstandingBalance > 0);
+            for (let t of unpaidTxs) {
+                t.paymentHistory = t.paymentHistory || [];
+                t.paymentHistory.push({
+                    date: paymentDate,
+                    amount: t.outstandingBalance,
+                    method: "cash-credit"
+                });
+            }
         }
-
-        cust.outstandingDebt = Math.max(0, (cust.outstandingDebt || 0) - collectAmount);
 
     } else {
         // Single invoice logic
@@ -2746,41 +2759,49 @@ function processDebtRepayment() {
             if (!validateAndPushCheque(idField, custObj, collectAmount, tx.salesman)) return;
         }
 
-        tx.outstandingBalance -= collectAmount;
-        tx.amountPaid += collectAmount;
+        if (paymentMethod !== "cash-credit") {
+            tx.outstandingBalance -= collectAmount;
+            tx.amountPaid += collectAmount;
+            
+            if (tx.outstandingBalance === 0) tx.status = "paid";
+
+            if (tx.customer && tx.customer.id && state.customers) {
+                const cust = state.customers.find(c => c.id === tx.customer.id);
+                if (cust) {
+                    cust.outstandingDebt = Math.max(0, (cust.outstandingDebt || 0) - collectAmount);
+                }
+            }
+        }
+        
         tx.paymentHistory = tx.paymentHistory || [];
         tx.paymentHistory.push({
             date: paymentDate,
             amount: collectAmount,
             method: paymentMethod
         });
-        if (tx.outstandingBalance === 0) tx.status = "paid";
-
-        if (tx.customer && tx.customer.id && state.customers) {
-            const cust = state.customers.find(c => c.id === tx.customer.id);
-            if (cust) {
-                cust.outstandingDebt = Math.max(0, (cust.outstandingDebt || 0) - collectAmount);
-            }
-        }
     }
 
     saveStateToServer();
     closeDebtModal();
     refreshAllViews();
 
+    const companyName = document.getElementById("debt-company-name").value;
+
     if (paymentMethod === "cheque") {
         const chqNum = document.getElementById("debt-cheque-number").value.trim();
-        triggerNotification("success", "Cheque Received", `Cheque ${chqNum} for ${state.settings.currency}${collectAmount.toFixed(2)} logged for ${tx.customer.companyName || tx.customer.name}.`);
-        alert("Cheque received and logged successfully! Invoice outstanding balance updated.");
-    } else {
-        triggerNotification("success", "Credit Payment Collected", `Collected ${state.settings.currency}${collectAmount.toFixed(2)} from ${tx.customer.companyName || tx.customer.name} via ${paymentMethod.toUpperCase()}.`);
-        alert("Wholesale invoice payment collected successfully!");
-    }
-
-    if (paymentMethod === "cash-credit") {
+        triggerNotification("success", "Cheque Received", `Cheque ${chqNum} for ${state.settings.currency}${collectAmount.toFixed(2)} logged for ${companyName}.`);
+        alert("Cheque received and logged successfully! Outstanding balance updated.");
+    } else if (paymentMethod === "cash-credit") {
+        triggerNotification("success", "Moved to Cash Credit", `The invoice for ${companyName} has been officially recorded as Cash Credit.`);
+        alert("Successfully registered under Cash Credit!");
         switchTab("cash-credit");
+    } else {
+        triggerNotification("success", "Credit Payment Collected", `Collected ${state.settings.currency}${collectAmount.toFixed(2)} from ${companyName} via ${paymentMethod.toUpperCase()}.`);
+        alert("Payment collected successfully!");
     }
 }
+
+// Ensure the old ending logic is removed completely
 
 // --------------------------------------------------------------------------
 // 9. Inventory Management Controller
