@@ -2252,14 +2252,14 @@ function processWholesaleCheckout() {
     cust.purchaseCount = (cust.purchaseCount || 0) + 1;
 
     // 5. Save B2B Invoice to Wholesale Ledgers
-    let nextNum = 1200;
+    let nextNum = 1120;
     if (state.wholesaleTransactions.length > 0) {
         const ids = state.wholesaleTransactions.map(t => {
             const match = t.id.match(/\d+$/);
             return match ? parseInt(match[0], 10) : 0;
         });
         const maxId = Math.max(...ids);
-        if (maxId >= 1200) {
+        if (maxId >= 1120) {
             nextNum = maxId + 1;
         }
     }
