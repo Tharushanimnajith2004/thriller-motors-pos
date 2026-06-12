@@ -2670,17 +2670,29 @@ function renderWholesaleLedger() {
     tbody.innerHTML = list.map(tx => {
         const datetime = new Date(tx.timestamp).toLocaleString();
         
+        let hasPaymentHistory = tx.paymentHistory && tx.paymentHistory.length > 0;
+        
         let statusBadge = `<span class="badge badge-success">Delivered / Paid</span>`;
-        let actionBtn = `<div style="display:flex; flex-direction:column; gap:4px; min-width:80px;">
-                            <button class="btn btn-secondary btn-xs" onclick="viewWholesaleReceipt('${tx.id}')"><i class="fa-solid fa-receipt"></i> Receipt</button>
-                            <button class="btn btn-danger btn-xs" onclick="cancelWholesaleInvoice('${tx.id}')"><i class="fa-solid fa-ban"></i> Return</button>
-                         </div>`;
+        let actionBtn = `<button class="btn btn-secondary btn-xs" style="width:100%;" onclick="viewWholesaleReceipt('${tx.id}')"><i class="fa-solid fa-receipt"></i> Receipt</button>`;
 
         if (tx.status === "returned") {
             statusBadge = `<span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">Returned / Cancelled</span>`;
-            actionBtn = `<button class="btn btn-secondary btn-xs" style="width:100%;" onclick="viewWholesaleReceipt('${tx.id}')"><i class="fa-solid fa-receipt"></i> Receipt</button>`;
+        } else if (hasPaymentHistory) {
+            if (tx.outstandingBalance > 0) {
+                // Determine if it was moved to cash credit or just partial payment
+                const lastMethod = tx.paymentHistory[tx.paymentHistory.length - 1].method;
+                if (lastMethod === "cash-credit") {
+                    statusBadge = `<span class="badge badge-warning" style="background: rgba(245, 158, 11, 0.15); color: var(--amber-500); border: 1px solid rgba(245, 158, 11, 0.3);">Moved to Cash Credit</span>`;
+                } else if (lastMethod === "cheque") {
+                    statusBadge = `<span class="badge badge-warning" style="background: rgba(245, 158, 11, 0.15); color: var(--amber-500); border: 1px solid rgba(245, 158, 11, 0.3);">Cheque Received</span>`;
+                } else {
+                    statusBadge = `<span class="badge badge-warning" style="background: rgba(245, 158, 11, 0.15); color: var(--amber-500); border: 1px solid rgba(245, 158, 11, 0.3);">Partial Payment</span>`;
+                }
+            } else {
+                statusBadge = `<span class="badge badge-success" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">Fully Settled</span>`;
+            }
         } else if (tx.outstandingBalance > 0) {
-            statusBadge = `<span class="badge badge-danger">Outstanding credit</span>`;
+            statusBadge = `<span class="badge badge-danger">Pending Collection</span>`;
             actionBtn = `
                 <div style="display:flex; flex-direction:column; gap:4px; min-width:80px;">
                     <button class="btn btn-secondary btn-xs" onclick="viewWholesaleReceipt('${tx.id}')"><i class="fa-solid fa-receipt"></i> Receipt</button>
