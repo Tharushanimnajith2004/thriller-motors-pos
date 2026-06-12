@@ -766,13 +766,14 @@ function renderCashCreditTab() {
 
     let shemalDebt = 0;
     let kaveenDebt = 0;
-    state.wholesaleTransactions.forEach(tx => {
-        if ((tx.outstandingBalance || 0) > 0) {
-            if (tx.salesman === "Kaveen") {
-                kaveenDebt += tx.outstandingBalance;
+    state.customers.forEach(c => {
+        const debt = c.outstandingDebt || 0;
+        if (debt > 0) {
+            if (c.salesman === "Kaveen") {
+                kaveenDebt += debt;
             } else {
                 // Default to Shemal
-                shemalDebt += tx.outstandingBalance;
+                shemalDebt += debt;
             }
         }
     });
