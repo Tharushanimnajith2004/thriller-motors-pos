@@ -842,6 +842,9 @@ function renderCashCreditTab() {
                     <button class="btn btn-secondary btn-xs" title="View Payment History" onclick="openPaymentHistoryModal('${c.id}')">
                         <i class="fa-solid fa-clock-rotate-left"></i> View History
                     </button>
+                    <button class="btn btn-secondary btn-xs" style="background-color:var(--amber-500); border-color:var(--amber-500); color:#fff;" title="Edit Debt Balance" onclick="editCustomerDebt('${c.id}')">
+                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                    </button>
                 </div>
             </td>
         </tr>
@@ -871,7 +874,50 @@ function openManualCreditModal() {
 
 function closeManualCreditModal() {
     const modal = document.getElementById("modal-manual-credit");
-    if (modal) modal.style.display = "none";
+    modal.style.display = "none";
+}
+
+async function editCustomerDebt(customerId) {
+    const cust = state.customers.find(c => c.id === customerId);
+    if (!cust) return;
+
+    const pass = await promptOwnerPassword("Enter Owner Password to edit Cash Credit balance:");
+    if (pass === null) return;
+
+    const currentOwnerPass = state.settings.ownerPassword || "admin123";
+    if (pass !== currentOwnerPass) {
+        alert("Incorrect password. Access denied.");
+        return;
+    }
+
+    const { value: newAmount } = await Swal.fire({
+        title: `Edit Debt for ${cust.companyName || cust.name}`,
+        input: 'number',
+        inputLabel: 'New Outstanding Balance Amount',
+        inputValue: cust.outstandingDebt || 0,
+        showCancelButton: true,
+        inputValidator: (value) => {
+            if (!value || value < 0) {
+                return 'Please enter a valid amount (0 or greater)';
+            }
+        }
+    });
+
+    if (newAmount !== undefined) {
+        const amountNum = parseFloat(newAmount);
+        const oldAmount = cust.outstandingDebt || 0;
+        cust.outstandingDebt = amountNum;
+        
+        // Log manual edit to history if we want to trace it
+        const editAmountDiff = amountNum - oldAmount;
+        if (editAmountDiff !== 0) {
+            // We can just log it to the first active invoice or just keep it simple
+            // and simply save the customer debt state.
+            saveStateToServer();
+            triggerNotification("success", "Debt Updated", `Cash credit balance updated for ${cust.name}.`);
+            refreshAllViews();
+        }
+    }
 }
 
 function openCashCreditPaymentModal(customerId) {
