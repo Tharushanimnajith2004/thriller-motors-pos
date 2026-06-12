@@ -800,17 +800,18 @@ function renderCashCreditTab() {
     const tbody = document.getElementById("cash-credit-table-body");
     if (!tbody) return;
 
-    const debtors = state.customers.filter(c => (c.outstandingDebt || 0) > 0);
+    let debtors = state.customers.filter(c => (c.outstandingDebt || 0) > 0);
 
     if (debtors.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No cash credit customers or outstanding balances found.</td></tr>`;
         return;
     }
 
-    tbody.innerHTML = debtors.map(c => {
-        let ageDisplay = "-";
+    const now = new Date();
+    debtors = debtors.map(c => {
         let refDate = null;
-
+        let daysDiff = -1;
+        
         if (c.customDebtDate) {
             refDate = new Date(c.customDebtDate);
         } else {
@@ -822,8 +823,20 @@ function renderCashCreditTab() {
         }
 
         if (refDate) {
-            const msDiff = new Date() - refDate;
-            const daysDiff = Math.floor(msDiff / (1000 * 60 * 60 * 24));
+            daysDiff = Math.floor((now - refDate) / (1000 * 60 * 60 * 24));
+        }
+        
+        return { ...c, tempDaysDiff: daysDiff };
+    });
+
+    // Sort descending by days due
+    debtors.sort((a, b) => b.tempDaysDiff - a.tempDaysDiff);
+
+    tbody.innerHTML = debtors.map(c => {
+        let ageDisplay = "-";
+
+        if (c.tempDaysDiff !== -1) {
+            const daysDiff = c.tempDaysDiff;
             
             if (daysDiff <= 0) {
                 ageDisplay = `<span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--success); font-size:0.75rem; padding: 3px 6px;">Today</span>`;
