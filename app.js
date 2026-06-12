@@ -2254,13 +2254,17 @@ function processWholesaleCheckout() {
     // 5. Save B2B Invoice to Wholesale Ledgers
     let nextNum = 1120;
     if (state.wholesaleTransactions.length > 0) {
-        const ids = state.wholesaleTransactions.map(t => {
-            const match = t.id.match(/\d+$/);
-            return match ? parseInt(match[0], 10) : 0;
-        });
-        const maxId = Math.max(...ids);
-        if (maxId >= 1120) {
-            nextNum = maxId + 1;
+        // Only consider W-INV- format to prevent Date.now() from MC- inflating the maxId
+        const validTxs = state.wholesaleTransactions.filter(t => t.id && t.id.startsWith("W-INV-"));
+        if (validTxs.length > 0) {
+            const ids = validTxs.map(t => {
+                const match = t.id.match(/W-INV-(\d+)$/);
+                return match ? parseInt(match[1], 10) : 0;
+            });
+            const maxId = Math.max(...ids);
+            if (maxId >= 1120) {
+                nextNum = maxId + 1;
+            }
         }
     }
     const wInvoiceId = "W-INV-" + nextNum;
