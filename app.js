@@ -5237,6 +5237,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("form-manual-credit")?.addEventListener("submit", (e) => {
         e.preventDefault();
         const custId = document.getElementById("mc-customer").value;
+        const salesman = document.getElementById("mc-salesman").value || "Shemal";
         const amount = parseFloat(document.getElementById("mc-amount").value);
         const note = document.getElementById("mc-note").value.trim() || "Manual Cash/Credit Entry";
         const dateInput = document.getElementById("mc-date").value;
@@ -5259,6 +5260,7 @@ document.addEventListener("DOMContentLoaded", () => {
             id: newDebtId,
             timestamp: transactionDate.toISOString(),
             customer: { id: customer.id, name: customer.companyName || customer.name },
+            salesman: salesman,
             paymentMethod: "store-credit",
             billingTerms: "Manual Credit Issue",
             status: "unpaid",
