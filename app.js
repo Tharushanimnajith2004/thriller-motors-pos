@@ -809,13 +809,23 @@ function renderCashCreditTab() {
 
     tbody.innerHTML = debtors.map(c => {
         let ageDisplay = "-";
-        const unpaidTxs = state.wholesaleTransactions.filter(t => t.customer?.id === c.id && t.outstandingBalance > 0);
-        if (unpaidTxs.length > 0) {
-            unpaidTxs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-            const msDiff = new Date() - new Date(unpaidTxs[0].timestamp);
+        let refDate = null;
+
+        if (c.customDebtDate) {
+            refDate = new Date(c.customDebtDate);
+        } else {
+            const unpaidTxs = state.wholesaleTransactions.filter(t => t.customer?.id === c.id && t.outstandingBalance > 0);
+            if (unpaidTxs.length > 0) {
+                unpaidTxs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                refDate = new Date(unpaidTxs[0].timestamp);
+            }
+        }
+
+        if (refDate) {
+            const msDiff = new Date() - refDate;
             const daysDiff = Math.floor(msDiff / (1000 * 60 * 60 * 24));
             
-            if (daysDiff === 0) {
+            if (daysDiff <= 0) {
                 ageDisplay = `<span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--success); font-size:0.75rem; padding: 3px 6px;">Today</span>`;
             } else if (daysDiff <= 30) {
                 ageDisplay = `<span class="badge" style="background: rgba(245, 158, 11, 0.1); color: var(--amber-500); font-size:0.75rem; padding: 3px 6px;">${daysDiff} Days</span>`;
@@ -890,33 +900,42 @@ async function editCustomerDebt(customerId) {
         return;
     }
 
-    const { value: newAmount } = await Swal.fire({
-        title: `Edit Debt for ${cust.companyName || cust.name}`,
-        input: 'number',
-        inputLabel: 'New Outstanding Balance Amount',
-        inputValue: cust.outstandingDebt || 0,
+    const { value: formValues } = await Swal.fire({
+        title: `Edit Debt Details`,
+        html: `
+            <div style="text-align: left; margin-bottom: 15px;">
+                <label style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">New Outstanding Balance</label>
+                <input id="swal-edit-debt-amount" type="number" class="swal2-input" value="${cust.outstandingDebt || 0}" step="0.01" min="0" style="margin-top: 5px; width: 90%; margin-left: 5%;">
+            </div>
+            <div style="text-align: left;">
+                <label style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">Debt Reference Date</label>
+                <input id="swal-edit-debt-date" type="date" class="swal2-input" value="${cust.customDebtDate || new Date().toISOString().split('T')[0]}" style="margin-top: 5px; width: 90%; margin-left: 5%;">
+            </div>
+        `,
+        focusConfirm: false,
         showCancelButton: true,
-        inputValidator: (value) => {
-            if (!value || value < 0) {
-                return 'Please enter a valid amount (0 or greater)';
+        preConfirm: () => {
+            const amt = document.getElementById('swal-edit-debt-amount').value;
+            const dt = document.getElementById('swal-edit-debt-date').value;
+            if (!amt || parseFloat(amt) < 0) {
+                Swal.showValidationMessage('Please enter a valid amount (0 or greater)');
+                return false;
             }
+            if (!dt) {
+                Swal.showValidationMessage('Please select a valid date');
+                return false;
+            }
+            return { amount: parseFloat(amt), date: dt };
         }
     });
 
-    if (newAmount !== undefined) {
-        const amountNum = parseFloat(newAmount);
-        const oldAmount = cust.outstandingDebt || 0;
-        cust.outstandingDebt = amountNum;
+    if (formValues) {
+        cust.outstandingDebt = formValues.amount;
+        cust.customDebtDate = formValues.date;
         
-        // Log manual edit to history if we want to trace it
-        const editAmountDiff = amountNum - oldAmount;
-        if (editAmountDiff !== 0) {
-            // We can just log it to the first active invoice or just keep it simple
-            // and simply save the customer debt state.
-            saveStateToServer();
-            triggerNotification("success", "Debt Updated", `Cash credit balance updated for ${cust.name}.`);
-            refreshAllViews();
-        }
+        saveStateToServer();
+        triggerNotification("success", "Debt Updated", `Cash credit balance and date updated for ${cust.name}.`);
+        refreshAllViews();
     }
 }
 
