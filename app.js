@@ -856,13 +856,10 @@ function closeManualCreditModal() {
 }
 
 function openCashCreditPaymentModal(customerId) {
-    // We need to find the oldest unpaid invoice for this customer to map to the debt modal.
-    // If the modal expects an invoiceId, we will pass the first one that has an outstanding balance.
+    // Open payment modal at the customer level to allow one large payment (e.g. Cheque) to cover multiple invoices
     const unpaidTxs = state.wholesaleTransactions.filter(t => t.customer.id === customerId && t.outstandingBalance > 0);
     if (unpaidTxs.length > 0) {
-        // Find the oldest one
-        unpaidTxs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-        openDebtRepaymentModal(unpaidTxs[0].id);
+        openDebtRepaymentModal(null, customerId);
     } else {
         alert("No outstanding wholesale invoices found for this customer to collect against.");
     }
@@ -2590,7 +2587,7 @@ function renderWholesaleLedger() {
             actionBtn = `
                 <div style="display:flex; flex-direction:column; gap:4px; min-width:80px;">
                     <button class="btn btn-secondary btn-xs" onclick="viewWholesaleReceipt('${tx.id}')"><i class="fa-solid fa-receipt"></i> Receipt</button>
-                    <button class="btn btn-primary btn-xs" style="background-color:var(--success);" onclick="openDebtRepaymentModal('${tx.id}')"><i class="fa-solid fa-truck-fast"></i> Delivered</button>
+                    <button class="btn btn-primary btn-xs" style="background-color:var(--success);" onclick="openDebtRepaymentModal('${tx.id}')"><i class="fa-solid fa-hand-holding-dollar"></i> Collect Payment</button>
                     <button class="btn btn-danger btn-xs" onclick="cancelWholesaleInvoice('${tx.id}')"><i class="fa-solid fa-ban"></i> Return</button>
                 </div>
             `;
@@ -2624,21 +2621,30 @@ function renderWholesaleLedger() {
 }
 
 // B2B AR COLLECT DEBT OVERLAY
-function openDebtRepaymentModal(invoiceId) {
-    const tx = state.wholesaleTransactions.find(t => t.id === invoiceId);
-    if (!tx) return;
-
+function openDebtRepaymentModal(invoiceId, customerId = null) {
     const modal = document.getElementById("modal-debt-payment");
     if (!modal) return;
 
-    document.getElementById("debt-tx-id-field").value = tx.id;
-    document.getElementById("debt-company-name").value = tx.customer?.companyName || tx.customer?.name;
-    document.getElementById("debt-grand-total").value = `${state.settings.currency}${tx.grandTotal.toFixed(2)}`;
-    document.getElementById("debt-remaining-balance").value = `${state.settings.currency}${tx.outstandingBalance.toFixed(2)}`;
-    
+    if (invoiceId) {
+        const tx = state.wholesaleTransactions.find(t => t.id === invoiceId);
+        if (!tx) return;
+        document.getElementById("debt-tx-id-field").value = tx.id;
+        document.getElementById("debt-company-name").value = tx.customer?.companyName || tx.customer?.name;
+        document.getElementById("debt-grand-total").value = `${state.settings.currency}${tx.grandTotal.toFixed(2)}`;
+        document.getElementById("debt-remaining-balance").value = `${state.settings.currency}${tx.outstandingBalance.toFixed(2)}`;
+        document.getElementById("debt-collect-amount").max = tx.outstandingBalance;
+    } else if (customerId) {
+        const cust = state.customers.find(c => c.id === customerId);
+        if (!cust) return;
+        document.getElementById("debt-tx-id-field").value = "CUST-" + customerId;
+        document.getElementById("debt-company-name").value = cust.companyName || cust.name;
+        document.getElementById("debt-grand-total").value = `Multiple Invoices`;
+        document.getElementById("debt-remaining-balance").value = `${state.settings.currency}${(cust.outstandingDebt || 0).toFixed(2)}`;
+        document.getElementById("debt-collect-amount").max = cust.outstandingDebt;
+    }
+
     // Suggest complete payment in help text
     document.getElementById("debt-collect-amount").value = "";
-    document.getElementById("debt-collect-amount").max = tx.outstandingBalance;
 
     const todayStr = new Date().toISOString().split('T')[0];
     const dateInput = document.getElementById("debt-payment-date");
@@ -2678,81 +2684,84 @@ function closeDebtModal() {
 }
 
 function processDebtRepayment() {
-    const invoiceId = document.getElementById("debt-tx-id-field").value;
+    const idField = document.getElementById("debt-tx-id-field").value;
     const collectAmount = parseFloat(document.getElementById("debt-collect-amount").value) || 0;
+    const paymentMethod = document.getElementById("debt-payment-method")?.value || "cash";
+    const paymentDate = document.getElementById("debt-payment-date")?.value || new Date().toISOString();
 
-    const tx = state.wholesaleTransactions.find(t => t.id === invoiceId);
-    if (!tx) return;
-
-    if (collectAmount <= 0 || collectAmount > tx.outstandingBalance) {
+    if (collectAmount <= 0) {
         alert("Invalid payment collection amount!");
         return;
     }
 
-    const paymentMethod = document.getElementById("debt-payment-method")?.value || "cash";
+    // Check if it's a customer-level payment
+    if (idField.startsWith("CUST-")) {
+        const customerId = idField.replace("CUST-", "");
+        const cust = state.customers.find(c => c.id === customerId);
+        if (!cust) return;
 
-    if (paymentMethod === "cheque") {
-        const chqNum = document.getElementById("debt-cheque-number").value.trim();
-        const chqBank = document.getElementById("debt-cheque-bank").value.trim();
-        const chqBranch = document.getElementById("debt-cheque-branch").value.trim();
-        const chqRecDate = document.getElementById("debt-cheque-received-date").value;
-        const chqDepDate = document.getElementById("debt-cheque-deposit-date").value;
-        const chqEmergDate = document.getElementById("debt-cheque-emergency-date").value || null;
-
-        if (!chqNum || !chqBank || !chqBranch || !chqRecDate || !chqDepDate) {
-            alert("Please fill in all required cheque details!");
+        if (collectAmount > cust.outstandingDebt) {
+            alert("Payment amount cannot exceed the total outstanding debt!");
             return;
         }
 
-        // Prevent duplicate cheque numbers
-        const existingCheque = state.cheques.find(c => c.chequeNumber === chqNum);
-        if (existingCheque) {
-            alert("This cheque number has already been added to the system!");
-            return;
+        if (paymentMethod === "cheque") {
+            if (!validateAndPushCheque(idField, cust, collectAmount)) return;
         }
 
-        // Log the cheque
-        const newCheque = {
-            id: "CHQ-" + Date.now() + "-" + Math.floor(Math.random() * 1000),
-            chequeNumber: chqNum,
-            bankName: chqBank,
-            branchName: chqBranch,
-            receivedDate: chqRecDate,
-            depositDate: chqDepDate,
-            emergencyRequestDate: chqEmergDate,
-            amount: collectAmount,
-            status: chqEmergDate ? "postponed" : "pending",
-            customer: {
-                id: tx.customer.id,
-                name: tx.customer.name,
-                companyName: tx.customer.companyName || tx.customer.name
-            },
-            invoiceId: tx.id,
-            salesman: tx.salesman || "Shemal"
-        };
-        state.cheques.push(newCheque);
-    }
+        // Distribute payment across unpaid transactions
+        let remainingToCollect = collectAmount;
+        const unpaidTxs = state.wholesaleTransactions.filter(t => t.customer?.id === customerId && t.outstandingBalance > 0);
+        unpaidTxs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-    // 1. Deduct outstanding balance in invoice ledger
-    tx.outstandingBalance = Math.max(0, tx.outstandingBalance - collectAmount);
-    tx.amountPaid += collectAmount;
-    
-    tx.paymentHistory = tx.paymentHistory || [];
-    const paymentDate = document.getElementById("debt-payment-date")?.value || new Date().toISOString();
-    tx.paymentHistory.push({
-        date: paymentDate,
-        amount: collectAmount,
-        method: paymentMethod
-    });
+        for (let t of unpaidTxs) {
+            if (remainingToCollect <= 0) break;
+            const deduction = Math.min(remainingToCollect, t.outstandingBalance);
+            t.outstandingBalance -= deduction;
+            t.amountPaid += deduction;
+            t.paymentHistory = t.paymentHistory || [];
+            t.paymentHistory.push({
+                date: paymentDate,
+                amount: deduction,
+                method: paymentMethod
+            });
+            if (t.outstandingBalance === 0) t.status = "paid";
+            remainingToCollect -= deduction;
+        }
 
-    if (tx.outstandingBalance === 0) {
-        tx.status = "paid";
-    }
-
-    // 2. Reduce Customer outstanding debt profile
-    const cust = state.customers.find(c => c.id === tx.customer.id);
-    if (cust) {
         cust.outstandingDebt = Math.max(0, (cust.outstandingDebt || 0) - collectAmount);
+
+    } else {
+        // Single invoice logic
+        const tx = state.wholesaleTransactions.find(t => t.id === idField);
+        if (!tx) return;
+
+        if (collectAmount > tx.outstandingBalance) {
+            alert("Payment amount cannot exceed the invoice's outstanding balance!");
+            return;
+        }
+
+        if (paymentMethod === "cheque") {
+            const custObj = state.customers.find(c => c.id === tx.customer?.id) || tx.customer;
+            if (!validateAndPushCheque(idField, custObj, collectAmount, tx.salesman)) return;
+        }
+
+        tx.outstandingBalance -= collectAmount;
+        tx.amountPaid += collectAmount;
+        tx.paymentHistory = tx.paymentHistory || [];
+        tx.paymentHistory.push({
+            date: paymentDate,
+            amount: collectAmount,
+            method: paymentMethod
+        });
+        if (tx.outstandingBalance === 0) tx.status = "paid";
+
+        if (tx.customer && tx.customer.id && state.customers) {
+            const cust = state.customers.find(c => c.id === tx.customer.id);
+            if (cust) {
+                cust.outstandingDebt = Math.max(0, (cust.outstandingDebt || 0) - collectAmount);
+            }
+        }
     }
 
     saveStateToServer();
