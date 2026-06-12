@@ -407,6 +407,19 @@ function sanitizeState() {
             tx.discountAmount = Number(tx.discountAmount) || 0;
             tx.amountPaid = Number(tx.amountPaid) || 0;
             tx.outstandingBalance = Number(tx.outstandingBalance) || 0;
+            
+            // Repair assigned salesman based on customer
+            if (tx.customer && tx.customer.id && state.customers) {
+                const cust = state.customers.find(c => c.id === tx.customer.id);
+                if (cust && cust.salesman) {
+                    tx.salesman = cust.salesman;
+                } else if (!tx.salesman) {
+                    tx.salesman = "Shemal";
+                }
+            } else if (!tx.salesman) {
+                tx.salesman = "Shemal";
+            }
+
             if (tx.items) {
                 tx.items.forEach(item => {
                     item.sellingPrice = Number(item.sellingPrice) || 0;
@@ -3733,6 +3746,7 @@ function saveCustomerForm() {
         triggerNotification("success", "Customer Registered", `${name} has been registered.`);
     }
 
+    sanitizeState();
     saveStateToServer();
     closeCustomerModal();
     refreshAllViews();
