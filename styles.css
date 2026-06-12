@@ -2240,7 +2240,7 @@ html[data-theme="light"] .sun-icon { display: block; color: var(--warning); }
 @media print {
     @page {
         size: A4 portrait;
-        margin: 10mm;
+        margin: 0; /* Remove margins to hide browser header/footer URLs */
     }
     body * {
         visibility: hidden;
@@ -2268,9 +2268,10 @@ html[data-theme="light"] .sun-icon { display: block; color: var(--warning); }
         display: none !important;
     }
     .a4-invoice-wrapper {
-        padding: 0;
+        padding: 10mm;
         max-width: 100%;
         width: 100%;
+        box-sizing: border-box;
     }
 }
 

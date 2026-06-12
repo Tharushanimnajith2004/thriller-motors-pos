@@ -2330,9 +2330,21 @@ function viewWholesaleReceipt(invoiceId) {
                 </tbody>
                 <tfoot>
                     <tr class="inv-total-row">
-                        <td colspan="6" style="text-align:left; font-weight:bold;">Total</td>
-                        <td style="text-align:right; font-weight:bold; border-right:1px solid #000;">${gSplit.rs}</td>
-                        <td style="text-align:right; font-weight:bold;">${gSplit.cts}</td>
+                        <td colspan="6" style="text-align:left; font-weight:bold;">Subtotal</td>
+                        <td style="text-align:right; font-weight:bold; border-right:1px solid #000;">${splitMoney(tx.subtotal || tx.grandTotal).rs}</td>
+                        <td style="text-align:right; font-weight:bold;">${splitMoney(tx.subtotal || tx.grandTotal).cts}</td>
+                    </tr>
+                    ${(tx.discountAmount || 0) > 0 ? `
+                    <tr>
+                        <td colspan="6" style="text-align:left; font-weight:bold;">Discount Amount (-)</td>
+                        <td style="text-align:right; font-weight:bold; border-right:1px solid #000; color: #d32f2f;">${splitMoney(tx.discountAmount).rs}</td>
+                        <td style="text-align:right; font-weight:bold; color: #d32f2f;">${splitMoney(tx.discountAmount).cts}</td>
+                    </tr>
+                    ` : ''}
+                    <tr class="inv-total-row">
+                        <td colspan="6" style="text-align:left; font-weight:bold; font-size: 1.1em;">Total Amount</td>
+                        <td style="text-align:right; font-weight:bold; font-size: 1.1em; border-right:1px solid #000;">${gSplit.rs}</td>
+                        <td style="text-align:right; font-weight:bold; font-size: 1.1em;">${gSplit.cts}</td>
                     </tr>
                 </tfoot>
             </table>
