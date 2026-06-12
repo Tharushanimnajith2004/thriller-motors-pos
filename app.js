@@ -800,14 +800,31 @@ function renderCashCreditTab() {
     const tbody = document.getElementById("cash-credit-table-body");
     if (!tbody) return;
 
-    const debtors = state.customers.filter(c => (c.outstandingDebt || 0) > 0 || c.accountType === "cash-credit");
+    const debtors = state.customers.filter(c => (c.outstandingDebt || 0) > 0);
 
     if (debtors.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="empty-state">No cash credit customers or outstanding balances found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No cash credit customers or outstanding balances found.</td></tr>`;
         return;
     }
 
-    tbody.innerHTML = debtors.map(c => `
+    tbody.innerHTML = debtors.map(c => {
+        let ageDisplay = "-";
+        const unpaidTxs = state.wholesaleTransactions.filter(t => t.customer?.id === c.id && t.outstandingBalance > 0);
+        if (unpaidTxs.length > 0) {
+            unpaidTxs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            const msDiff = new Date() - new Date(unpaidTxs[0].timestamp);
+            const daysDiff = Math.floor(msDiff / (1000 * 60 * 60 * 24));
+            
+            if (daysDiff === 0) {
+                ageDisplay = `<span class="badge" style="background: rgba(16, 185, 129, 0.1); color: var(--success); font-size:0.75rem; padding: 3px 6px;">Today</span>`;
+            } else if (daysDiff <= 30) {
+                ageDisplay = `<span class="badge" style="background: rgba(245, 158, 11, 0.1); color: var(--amber-500); font-size:0.75rem; padding: 3px 6px;">${daysDiff} Days</span>`;
+            } else {
+                ageDisplay = `<span class="badge" style="background: rgba(239, 68, 68, 0.1); color: var(--danger); font-size:0.75rem; padding: 3px 6px;">${daysDiff} Days</span>`;
+            }
+        }
+
+        return `
         <tr>
             <td style="font-weight: 500;">
                 <div>${c.companyName || c.name}</div>
@@ -816,6 +833,7 @@ function renderCashCreditTab() {
             <td>${c.phone || '-'}</td>
             <td>${state.settings.currency}${(c.creditLimit || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
             <td style="color: var(--danger); font-weight: 600;">${state.settings.currency}${c.outstandingDebt.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+            <td>${ageDisplay}</td>
             <td>
                 <div style="display:flex; gap: 8px;">
                     <button class="btn btn-primary btn-xs" style="background-color:var(--success);" title="Collect Payment" onclick="openCashCreditPaymentModal('${c.id}')">
@@ -827,7 +845,8 @@ function renderCashCreditTab() {
                 </div>
             </td>
         </tr>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function openManualCreditModal() {
