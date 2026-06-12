@@ -945,7 +945,7 @@
                     <p class="subtitle">Manage customer installments and outstanding debts</p>
                 </div>
                 
-                <div class="stats-grid" style="margin-bottom: 20px;">
+                <div class="stats-grid" style="margin-bottom: 20px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
                     <div class="card stat-card" style="border-left: 4px solid var(--amber-500);">
                         <div class="card-icon" style="color: var(--amber-500); background: rgba(245, 158, 11, 0.1);">
                             <i class="fa-solid fa-money-bill-transfer"></i>
@@ -953,6 +953,24 @@
                         <div class="stat-info">
                             <span class="stat-label">Total Outstanding Debts</span>
                             <h2 class="stat-value" id="cash-credit-total-debt" style="color: var(--amber-500);">$0.00</h2>
+                        </div>
+                    </div>
+                    <div class="card stat-card" style="border-left: 4px solid var(--purple-500);">
+                        <div class="card-icon" style="color: var(--purple-500); background: rgba(168, 85, 247, 0.1);">
+                            <i class="fa-solid fa-user-tie"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Mr. Shemal's Credit</span>
+                            <h2 class="stat-value" id="cash-credit-shemal-debt" style="color: var(--purple-500);">$0.00</h2>
+                        </div>
+                    </div>
+                    <div class="card stat-card" style="border-left: 4px solid var(--primary);">
+                        <div class="card-icon" style="color: var(--primary); background: rgba(59, 130, 246, 0.1);">
+                            <i class="fa-solid fa-user-tie"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Mr. Kaveen's Credit</span>
+                            <h2 class="stat-value" id="cash-credit-kaveen-debt" style="color: var(--primary);">$0.00</h2>
                         </div>
                     </div>
                 </div>

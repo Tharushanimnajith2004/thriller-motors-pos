@@ -764,6 +764,25 @@ function renderCashCreditTab() {
         totalDebtEl.innerText = `${state.settings.currency}${totalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
+    let shemalDebt = 0;
+    let kaveenDebt = 0;
+    state.wholesaleTransactions.forEach(tx => {
+        if ((tx.outstandingBalance || 0) > 0) {
+            if (tx.salesman === "Kaveen") {
+                kaveenDebt += tx.outstandingBalance;
+            } else {
+                // Default to Shemal
+                shemalDebt += tx.outstandingBalance;
+            }
+        }
+    });
+
+    const shemalEl = document.getElementById("cash-credit-shemal-debt");
+    if (shemalEl) shemalEl.innerText = `${state.settings.currency}${shemalDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    const kaveenEl = document.getElementById("cash-credit-kaveen-debt");
+    if (kaveenEl) kaveenEl.innerText = `${state.settings.currency}${kaveenDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
     const tbody = document.getElementById("cash-credit-table-body");
     if (!tbody) return;
 
