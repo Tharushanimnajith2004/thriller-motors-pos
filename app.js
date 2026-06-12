@@ -2260,8 +2260,9 @@ function processWholesaleCheckout() {
             const ids = validTxs.map(t => {
                 const match = t.id.match(/W-INV-(\d+)$/);
                 return match ? parseInt(match[1], 10) : 0;
-            });
-            const maxId = Math.max(...ids);
+            }).filter(id => id < 1000000); // Filter out buggy timestamp IDs
+
+            const maxId = ids.length > 0 ? Math.max(...ids) : 0;
             if (maxId >= 1120) {
                 nextNum = maxId + 1;
             }
