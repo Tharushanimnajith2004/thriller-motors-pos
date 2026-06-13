@@ -1086,18 +1086,30 @@ function closePaymentHistoryModal() {
 }
 
 function renderOwnerDashboard() {
-    const totalRetail = state.transactions.reduce((sum, tx) => sum + tx.grandTotal, 0);
-    const totalWholesale = state.wholesaleTransactions.reduce((sum, tx) => sum + tx.grandTotal, 0);
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const isThisMonth = (timestamp) => {
+        const d = new Date(timestamp);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    };
+
+    const retailThisMonth = state.transactions.filter(tx => isThisMonth(tx.timestamp));
+    const wholesaleThisMonth = state.wholesaleTransactions.filter(tx => isThisMonth(tx.timestamp));
+
+    const totalRetail = retailThisMonth.reduce((sum, tx) => sum + tx.grandTotal, 0);
+    const totalWholesale = wholesaleThisMonth.reduce((sum, tx) => sum + tx.grandTotal, 0);
     const totalRev = totalRetail + totalWholesale;
 
-    const profitRetail = state.transactions.reduce((sum, tx) => sum + tx.profit, 0);
-    const profitWholesale = state.wholesaleTransactions.reduce((sum, tx) => sum + tx.profit, 0);
+    const profitRetail = retailThisMonth.reduce((sum, tx) => sum + tx.profit, 0);
+    const profitWholesale = wholesaleThisMonth.reduce((sum, tx) => sum + tx.profit, 0);
     const totalProfit = profitRetail + profitWholesale;
 
     let totalCashSales = totalRetail;
     let totalCreditSales = 0;
 
-    state.wholesaleTransactions.forEach(tx => {
+    wholesaleThisMonth.forEach(tx => {
         if (tx.paymentMethod === 'credit' || tx.paymentMethod === 'store-credit') {
             totalCreditSales += tx.grandTotal;
         } else if (tx.paymentMethod === 'cash-credit') {
@@ -1114,7 +1126,8 @@ function renderOwnerDashboard() {
     const elCreditSales = document.getElementById("owner-stat-credit-sales");
     const elProfit = document.getElementById("owner-stat-profit");
 
-    const totalExpenses = (state.expenses || []).reduce((sum, exp) => sum + exp.amount, 0);
+    const expensesThisMonth = (state.expenses || []).filter(exp => isThisMonth(exp.timestamp));
+    const totalExpenses = expensesThisMonth.reduce((sum, exp) => sum + exp.amount, 0);
     const netProfit = totalProfit - totalExpenses;
 
     if(elTotal) elTotal.innerText = `${state.settings.currency}${totalRev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -1213,17 +1226,29 @@ function renderOwnerSalesChart() {
 }
 
 function renderDashboard() {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const isThisMonth = (timestamp) => {
+        const d = new Date(timestamp);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    };
+
+    const retailThisMonth = state.transactions.filter(tx => isThisMonth(tx.timestamp));
+    const wholesaleThisMonth = state.wholesaleTransactions.filter(tx => isThisMonth(tx.timestamp));
+
     // aggregates taking account of both retail and B2B wholesale transactions
-    const totalRetail = state.transactions.reduce((sum, tx) => sum + tx.grandTotal, 0);
-    const totalWholesale = state.wholesaleTransactions.reduce((sum, tx) => sum + tx.grandTotal, 0);
+    const totalRetail = retailThisMonth.reduce((sum, tx) => sum + tx.grandTotal, 0);
+    const totalWholesale = wholesaleThisMonth.reduce((sum, tx) => sum + tx.grandTotal, 0);
     const totalRev = totalRetail + totalWholesale;
 
-    const profitRetail = state.transactions.reduce((sum, tx) => sum + tx.profit, 0);
-    const profitWholesale = state.wholesaleTransactions.reduce((sum, tx) => sum + tx.profit, 0);
+    const profitRetail = retailThisMonth.reduce((sum, tx) => sum + tx.profit, 0);
+    const profitWholesale = wholesaleThisMonth.reduce((sum, tx) => sum + tx.profit, 0);
     const totalProfit = profitRetail + profitWholesale;
 
     const lowStockCount = state.products.filter(p => getProductStock(p) <= state.settings.lowStockLimit).length;
-    const totalTxCount = state.transactions.length + state.wholesaleTransactions.length;
+    const totalTxCount = retailThisMonth.length + wholesaleThisMonth.length;
 
     document.getElementById("stat-revenue").innerText = `${state.settings.currency}${totalRev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     document.getElementById("stat-retail-revenue").innerText = `${state.settings.currency}${totalRetail.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
