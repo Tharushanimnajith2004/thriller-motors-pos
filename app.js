@@ -2138,15 +2138,18 @@ function renderWholesaleCartUI() {
                 (c.address && c.address.toLowerCase().includes(searchVal))
             );
         }
-        select.innerHTML = filteredCustomers.map(c => {
+        let optionsHtml = '<option value="" disabled selected>-- Select Customer --</option>';
+        optionsHtml += filteredCustomers.map(c => {
             const accType = c.creditLimit > 0 ? "Credit" : "Cash";
             return `<option value="${c.id}">${c.companyName || c.name} [${accType}] (${c.phone})</option>`;
         }).join('');
         
-        if (filteredCustomers.some(c => c.id === currentVal)) {
+        select.innerHTML = optionsHtml;
+        
+        if (currentVal && filteredCustomers.some(c => c.id === currentVal)) {
             select.value = currentVal;
-        } else if (filteredCustomers.length > 0) {
-            select.value = filteredCustomers[0].id;
+        } else {
+            select.value = "";
         }
     }
 
@@ -2245,7 +2248,11 @@ function processWholesaleCheckout() {
     }
 
     const salesmanSelect = document.getElementById("w-cart-salesman-select");
-    const selectedSalesman = salesmanSelect ? salesmanSelect.value : "Shemal";
+    const selectedSalesman = salesmanSelect ? salesmanSelect.value : "";
+    if (!selectedSalesman) {
+        alert("Please select a Salesman for this wholesale order!");
+        return;
+    }
 
     // 1. Math aggregates
     const taxRate = parseFloat(state.settings.taxRate) || 0;
