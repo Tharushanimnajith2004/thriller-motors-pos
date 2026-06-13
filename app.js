@@ -2114,6 +2114,13 @@ function removeWholesaleCartItem(idx) {
     renderWholesaleCartUI();
 }
 
+window.selectWholesaleCustomer = function(id, name) {
+    document.getElementById("w-cart-customer-select").value = id;
+    document.getElementById("w-cart-customer-search").value = name;
+    document.getElementById("w-cart-customer-autocomplete").style.display = "none";
+    updateB2BCreditDisplay();
+};
+
 function renderWholesaleCartUI() {
     const cartList = document.getElementById("w-cart-items-list");
     const subtotalEl = document.getElementById("w-cart-subtotal");
@@ -2150,17 +2157,35 @@ function renderWholesaleCartUI() {
             );
         }
         let optionsHtml = `<option value="" disabled selected>-- Select Customer (\${filteredCustomers.length} found) --</option>`;
-        optionsHtml += filteredCustomers.map(c => {
-            const accType = c.creditLimit > 0 ? "Credit" : "Cash";
-            return `<option value="${c.id}">${c.companyName || c.name} [${accType}] (${c.phone})</option>`;
-        }).join('');
-        
+        optionsHtml += filteredCustomers.map(c => `<option value="${c.id}">${c.companyName || c.name}</option>`).join('');
         select.innerHTML = optionsHtml;
         
         if (currentVal && filteredCustomers.some(c => c.id === currentVal)) {
             select.value = currentVal;
         } else {
             select.value = "";
+        }
+
+        // Autocomplete UI logic
+        const autocompleteDiv = document.getElementById("w-cart-customer-autocomplete");
+        if (autocompleteDiv) {
+            // Only show autocomplete if user is actively searching
+            if (searchVal.length > 0 && filteredCustomers.length > 0) {
+                autocompleteDiv.style.display = "flex";
+                autocompleteDiv.innerHTML = filteredCustomers.map(c => {
+                    const accType = c.creditLimit > 0 ? "Credit" : "Cash";
+                    const safeName = (c.companyName || c.name).replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                    return `<div style="padding: 10px; border-bottom: 1px solid var(--border-color); cursor: pointer;" onmouseover="this.style.background='var(--hover-bg)'" onmouseout="this.style.background='transparent'" onclick="selectWholesaleCustomer('${c.id}', '${safeName}')">
+                        <div style="font-weight: bold; color: var(--text-main);">${c.companyName || c.name} <span style="font-size: 0.8em; color: var(--primary-color);">[${accType}]</span></div>
+                        <div style="font-size: 0.8em; color: var(--text-muted);">${c.phone}</div>
+                    </div>`;
+                }).join('');
+            } else if (searchVal.length > 0 && filteredCustomers.length === 0) {
+                autocompleteDiv.style.display = "flex";
+                autocompleteDiv.innerHTML = `<div style="padding: 10px; color: var(--text-muted);">No customers found.</div>`;
+            } else {
+                autocompleteDiv.style.display = "none";
+            }
         }
     }
 

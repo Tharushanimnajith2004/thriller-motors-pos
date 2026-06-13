@@ -560,22 +560,24 @@
                         </div>
 
                         <!-- B2B Customer Selector -->
-                        <div class="cart-customer-selector" style="display: flex; flex-direction: column; gap: 8px;">
-                            <div class="selector-input-group border-wholesale" style="width: 100%;">
-                                <i class="fa-solid fa-magnifying-glass label-icon text-warning" style="font-size: 0.8rem;"></i>
-                                <input type="text" id="w-cart-customer-search" placeholder="Search customer (name, phone, company)..." style="background: none; border: none; width: 100%; color: var(--text-main); font-size: 0.8rem; height: 36px; outline: none; padding-left: 8px;">
-                            </div>
-                            <div style="display: flex; width: 100%; gap: 10px; align-items: center;">
-                                <div class="selector-input-group border-wholesale" style="flex: 1;">
-                                    <i class="fa-solid fa-building label-icon text-warning"></i>
-                                    <select id="w-cart-customer-select">
-                                        <option value="" disabled selected>-- Select Customer --</option>
-                                    </select>
+                        <div class="cart-customer-selector" style="display: flex; flex-direction: column; gap: 8px; position: relative;">
+                            <div style="display: flex; gap: 8px;">
+                                <div class="selector-input-group border-wholesale" style="flex: 1; position: relative;">
+                                    <i class="fa-solid fa-magnifying-glass label-icon text-warning" style="font-size: 0.8rem;"></i>
+                                    <input type="text" id="w-cart-customer-search" autocomplete="off" placeholder="Search and select customer..." style="background: none; border: none; width: 100%; color: var(--text-main); font-size: 0.8rem; height: 36px; outline: none; padding-left: 8px;">
+                                    
+                                    <!-- Custom Autocomplete Dropdown -->
+                                    <div id="w-cart-customer-autocomplete" style="display: none; position: absolute; top: 40px; left: 0; width: 100%; background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 100; max-height: 200px; overflow-y: auto; flex-direction: column;">
+                                    </div>
                                 </div>
                                 <button class="btn btn-secondary btn-icon-only" id="btn-w-add-customer-pos" title="Add Corporate Client">
                                     <i class="fa-solid fa-plus"></i>
                                 </button>
                             </div>
+                            
+                            <select id="w-cart-customer-select" style="display:none;">
+                                <option value="" disabled selected>-- Select Customer --</option>
+                            </select>
                         </div>
 
                         <!-- Customer credit ledger display -->
