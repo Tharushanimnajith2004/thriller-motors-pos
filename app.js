@@ -315,6 +315,12 @@ async function loadStateFromServer() {
             if (!state.settings.receiptFooter || state.settings.receiptFooter.includes("S&S Retail")) {
                 state.settings.receiptFooter = "Thank you for choosing Thriller Motors (Pvt) Ltd! Drive safely.";
             }
+            if (!state.settings.salesman1) {
+                state.settings.salesman1 = { name: "Mr. Shemal", phone: "" };
+            }
+            if (!state.settings.salesman2) {
+                state.settings.salesman2 = { name: "Mr. Kaveen", phone: "" };
+            }
         } else {
             console.log("No existing state on server, starting with empty state.");
         }
@@ -557,6 +563,7 @@ function refreshAllViews() {
     updateNotificationsUI();
     if (typeof renderPurchaseInvoices === 'function') renderPurchaseInvoices();
     if (typeof renderExpensesTab === 'function') renderExpensesTab();
+    if (typeof updateSalesmenUI === 'function') updateSalesmenUI();
 }
 
 // --------------------------------------------------------------------------
@@ -2458,6 +2465,13 @@ function viewWholesaleReceipt(invoiceId) {
 
     const fullCustomer = state.customers.find(c => c.id === tx.customer?.id) || tx.customer;
 
+    const savedSalesman = tx.salesman || "Shemal";
+    const s1 = state.settings.salesman1 || { name: "Mr. Shemal", phone: "" };
+    const s2 = state.settings.salesman2 || { name: "Mr. Kaveen", phone: "" };
+    let printName = savedSalesman === "Kaveen" ? s2.name : s1.name;
+    let printPhone = savedSalesman === "Kaveen" ? s2.phone : s1.phone;
+    const phoneStr = printPhone ? `<br><span style="font-size:0.85em">\${printPhone}</span>` : "";
+
     container.innerHTML = `
         <div class="a4-invoice-wrapper">
             <!-- Header -->
@@ -2552,7 +2566,7 @@ function viewWholesaleReceipt(invoiceId) {
             <div class="inv-footer-sigs">
                 <div class="sig-box">
                     <div class="sig-line">........................................</div>
-                    <div class="sig-title">Signature<br>Sales Representative (Mr. ${tx.salesman || "Shemal"})</div>
+                    <div class="sig-title">Signature<br>Sales Representative (${printName})${phoneStr}</div>
                 </div>
                 <div class="sig-box">
                     <div class="sig-line">........................................</div>
@@ -2649,6 +2663,88 @@ function setupWholesaleLedgerEvents() {
             }
         });
     }
+}
+
+window.editSalesmen = async function() {
+    const s1 = state.settings.salesman1 || { name: "Mr. Shemal", phone: "" };
+    const s2 = state.settings.salesman2 || { name: "Mr. Kaveen", phone: "" };
+    
+    const { value: formValues } = await Swal.fire({
+        title: 'Manage Sales Representatives',
+        html: `
+            <div style="text-align: left; padding: 10px;">
+                <h3 style="font-size: 0.95rem; font-weight: 600; color: var(--primary); margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Salesperson 1 (Default: Shemal)</h3>
+                <input id="swal-s1-name" class="swal2-input" style="margin: 0 0 10px 0; width: 100%; box-sizing: border-box;" placeholder="Name (e.g. Mr. Kamal)" value="\${s1.name}">
+                <input id="swal-s1-phone" class="swal2-input" style="margin: 0 0 20px 0; width: 100%; box-sizing: border-box;" placeholder="Phone Number" value="\${s1.phone}">
+                
+                <h3 style="font-size: 0.95rem; font-weight: 600; color: var(--primary); margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Salesperson 2 (Default: Kaveen)</h3>
+                <input id="swal-s2-name" class="swal2-input" style="margin: 0 0 10px 0; width: 100%; box-sizing: border-box;" placeholder="Name (e.g. Mr. Nimal)" value="\${s2.name}">
+                <input id="swal-s2-phone" class="swal2-input" style="margin: 0; width: 100%; box-sizing: border-box;" placeholder="Phone Number" value="\${s2.phone}">
+            </div>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Save Changes',
+        confirmButtonColor: 'var(--primary)',
+        preConfirm: () => {
+            return {
+                s1: {
+                    name: document.getElementById('swal-s1-name').value.trim() || "Mr. Shemal",
+                    phone: document.getElementById('swal-s1-phone').value.trim()
+                },
+                s2: {
+                    name: document.getElementById('swal-s2-name').value.trim() || "Mr. Kaveen",
+                    phone: document.getElementById('swal-s2-phone').value.trim()
+                }
+            }
+        }
+    });
+
+    if (formValues) {
+        state.settings.salesman1 = formValues.s1;
+        state.settings.salesman2 = formValues.s2;
+        await saveStateToServer();
+        triggerNotification("success", "Salesmen Updated", "Sales representative details have been updated.");
+        updateSalesmenUI();
+    }
+}
+
+function updateSalesmenUI() {
+    const s1 = state.settings.salesman1 || { name: "Mr. Shemal", phone: "" };
+    const s2 = state.settings.salesman2 || { name: "Mr. Kaveen", phone: "" };
+
+    // 1. Update POS Cart Dropdown
+    const cartSelect = document.getElementById("w-cart-salesman-select");
+    if (cartSelect) {
+        const currentVal = cartSelect.value;
+        cartSelect.innerHTML = \`
+            <option value="" disabled selected>-- Select Salesman --</option>
+            <option value="Shemal">\${s1.name} (Sales Representative)</option>
+            <option value="Kaveen">\${s2.name} (Sales Representative)</option>
+        \`;
+        if (currentVal) cartSelect.value = currentVal;
+    }
+    
+    // 2. Update Ledger Filter Dropdown
+    const filterSelect = document.getElementById("w-ledger-salesman-filter");
+    if (filterSelect) {
+        const currentVal = filterSelect.value;
+        filterSelect.innerHTML = \`
+            <option value="all">All Salespersons</option>
+            <option value="Shemal">\${s1.name}</option>
+            <option value="Kaveen">\${s2.name}</option>
+        \`;
+        filterSelect.value = currentVal;
+    }
+
+    // 3. Update Ledger Stat Cards
+    const s1NameEl = document.querySelector("#salesman-shemal-card .stat-label strong");
+    if (s1NameEl) s1NameEl.innerText = s1.name;
+    const s2NameEl = document.querySelector("#salesman-kaveen-card .stat-label strong");
+    if (s2NameEl) s2NameEl.innerText = s2.name;
+    
+    // Re-render Ledger table
+    renderWholesaleLedger();
 }
 
 function renderWholesaleLedger() {
