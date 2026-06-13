@@ -984,6 +984,16 @@ async function editCustomerDebt(customerId) {
         cust.outstandingDebt = formValues.amount;
         cust.customDebtDate = formValues.date;
         
+        // Update the timestamp of unpaid wholesale transactions so they appear in the correct month in the Ledger
+        const unpaidTxs = state.wholesaleTransactions.filter(t => t.customer?.id === customerId && t.outstandingBalance > 0);
+        unpaidTxs.forEach(t => {
+            // Keep the original time, but update the date part
+            const oldDateObj = new Date(t.timestamp);
+            const newDateObj = new Date(formValues.date);
+            newDateObj.setHours(oldDateObj.getHours(), oldDateObj.getMinutes(), oldDateObj.getSeconds());
+            t.timestamp = newDateObj.toISOString();
+        });
+
         saveStateToServer();
         triggerNotification("success", "Debt Updated", `Cash credit balance and date updated for ${cust.name}.`);
         refreshAllViews();
