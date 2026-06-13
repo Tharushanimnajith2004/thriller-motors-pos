@@ -2674,12 +2674,12 @@ window.editSalesmen = async function() {
         html: `
             <div style="text-align: left; padding: 10px;">
                 <h3 style="font-size: 0.95rem; font-weight: 600; color: var(--primary); margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Salesperson 1 (Default: Shemal)</h3>
-                <input id="swal-s1-name" class="swal2-input" style="margin: 0 0 10px 0; width: 100%; box-sizing: border-box;" placeholder="Name (e.g. Mr. Kamal)" value="\${s1.name}">
-                <input id="swal-s1-phone" class="swal2-input" style="margin: 0 0 20px 0; width: 100%; box-sizing: border-box;" placeholder="Phone Number" value="\${s1.phone}">
+                <input id="swal-s1-name" class="swal2-input" style="margin: 0 0 10px 0; width: 100%; box-sizing: border-box;" placeholder="Name (e.g. Mr. Kamal)" value="${s1.name}">
+                <input id="swal-s1-phone" class="swal2-input" style="margin: 0 0 20px 0; width: 100%; box-sizing: border-box;" placeholder="Phone Number" value="${s1.phone}">
                 
                 <h3 style="font-size: 0.95rem; font-weight: 600; color: var(--primary); margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">Salesperson 2 (Default: Kaveen)</h3>
-                <input id="swal-s2-name" class="swal2-input" style="margin: 0 0 10px 0; width: 100%; box-sizing: border-box;" placeholder="Name (e.g. Mr. Nimal)" value="\${s2.name}">
-                <input id="swal-s2-phone" class="swal2-input" style="margin: 0; width: 100%; box-sizing: border-box;" placeholder="Phone Number" value="\${s2.phone}">
+                <input id="swal-s2-name" class="swal2-input" style="margin: 0 0 10px 0; width: 100%; box-sizing: border-box;" placeholder="Name (e.g. Mr. Nimal)" value="${s2.name}">
+                <input id="swal-s2-phone" class="swal2-input" style="margin: 0; width: 100%; box-sizing: border-box;" placeholder="Phone Number" value="${s2.phone}">
             </div>
         `,
         focusConfirm: false,
@@ -2717,11 +2717,11 @@ function updateSalesmenUI() {
     const cartSelect = document.getElementById("w-cart-salesman-select");
     if (cartSelect) {
         const currentVal = cartSelect.value;
-        cartSelect.innerHTML = \`
+        cartSelect.innerHTML = `
             <option value="" disabled selected>-- Select Salesman --</option>
-            <option value="Shemal">\${s1.name} (Sales Representative)</option>
-            <option value="Kaveen">\${s2.name} (Sales Representative)</option>
-        \`;
+            <option value="Shemal">${s1.name} (Sales Representative)</option>
+            <option value="Kaveen">${s2.name} (Sales Representative)</option>
+        `;
         if (currentVal) cartSelect.value = currentVal;
     }
     
@@ -2729,11 +2729,11 @@ function updateSalesmenUI() {
     const filterSelect = document.getElementById("w-ledger-salesman-filter");
     if (filterSelect) {
         const currentVal = filterSelect.value;
-        filterSelect.innerHTML = \`
+        filterSelect.innerHTML = `
             <option value="all">All Salespersons</option>
-            <option value="Shemal">\${s1.name}</option>
-            <option value="Kaveen">\${s2.name}</option>
-        \`;
+            <option value="Shemal">${s1.name}</option>
+            <option value="Kaveen">${s2.name}</option>
+        `;
         filterSelect.value = currentVal;
     }
 
