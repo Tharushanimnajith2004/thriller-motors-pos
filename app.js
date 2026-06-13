@@ -1010,23 +1010,31 @@ function openPaymentHistoryModal(customerId) {
     if (!cust) return;
 
     const allPayments = [];
+    let totalBillAmount = 0;
     state.wholesaleTransactions.forEach(tx => {
-        if (tx.customer.id === customerId && tx.paymentHistory) {
-            tx.paymentHistory.forEach(ph => {
-                allPayments.push({
-                    date: new Date(ph.date),
-                    invoiceId: tx.id,
-                    billTotal: tx.grandTotal || 0,
-                    amount: ph.amount,
-                    method: ph.method
+        if (tx.customer.id === customerId) {
+            totalBillAmount += (tx.grandTotal || 0);
+            
+            if (tx.paymentHistory) {
+                tx.paymentHistory.forEach(ph => {
+                    allPayments.push({
+                        date: new Date(ph.date),
+                        invoiceId: tx.id,
+                        amount: ph.amount,
+                        method: ph.method
+                    });
                 });
-            });
+            }
         }
     });
 
     allPayments.sort((a, b) => b.date - a.date);
 
-    summary.innerHTML = `Customer: ${cust.companyName || cust.name} <br> Total Outstanding: ${state.settings.currency}${(cust.outstandingDebt || 0).toFixed(2)}`;
+    summary.innerHTML = `
+        <div style="margin-bottom: 4px;">Customer: ${cust.companyName || cust.name}</div>
+        <div style="margin-bottom: 4px;">Total Bill Amount: ${state.settings.currency}${totalBillAmount.toFixed(2)}</div>
+        <div>Total Outstanding: ${state.settings.currency}${(cust.outstandingDebt || 0).toFixed(2)}</div>
+    `;
 
     if (allPayments.length === 0) {
         tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--text-muted);">No recorded payment history found for this customer.</td></tr>`;
@@ -1036,7 +1044,6 @@ function openPaymentHistoryModal(customerId) {
                 <td>${p.date.toLocaleString()}</td>
                 <td><span class="badge badge-secondary">${p.invoiceId}</span></td>
                 <td style="text-transform: capitalize;">${p.method.replace('-', ' ')}</td>
-                <td style="text-align:right; font-weight:600;">${state.settings.currency}${p.billTotal.toFixed(2)}</td>
                 <td style="text-align:right; font-weight:600; color:var(--success);">${state.settings.currency}${p.amount.toFixed(2)}</td>
             </tr>
         `).join('');
