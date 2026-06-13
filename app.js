@@ -1016,6 +1016,7 @@ function openPaymentHistoryModal(customerId) {
                 allPayments.push({
                     date: new Date(ph.date),
                     invoiceId: tx.id,
+                    billTotal: tx.grandTotal || 0,
                     amount: ph.amount,
                     method: ph.method
                 });
@@ -1035,6 +1036,7 @@ function openPaymentHistoryModal(customerId) {
                 <td>${p.date.toLocaleString()}</td>
                 <td><span class="badge badge-secondary">${p.invoiceId}</span></td>
                 <td style="text-transform: capitalize;">${p.method.replace('-', ' ')}</td>
+                <td style="text-align:right; font-weight:600;">${state.settings.currency}${p.billTotal.toFixed(2)}</td>
                 <td style="text-align:right; font-weight:600; color:var(--success);">${state.settings.currency}${p.amount.toFixed(2)}</td>
             </tr>
         `).join('');
