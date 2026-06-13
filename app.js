@@ -570,6 +570,21 @@ function refreshAllViews() {
 // 3. Header & Notifications Controller
 // --------------------------------------------------------------------------
 function setupHeaderEvents() {
+    // Init Month Pickers
+    const now = new Date();
+    const currentMonthStr = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, '0');
+    
+    const dbFilter = document.getElementById("dashboard-month-filter");
+    if (dbFilter) {
+        dbFilter.value = currentMonthStr;
+        dbFilter.addEventListener("change", renderDashboard);
+    }
+    const ownerFilter = document.getElementById("owner-month-filter");
+    if (ownerFilter) {
+        ownerFilter.value = currentMonthStr;
+        ownerFilter.addEventListener("change", renderOwnerDashboard);
+    }
+
     const searchInput = document.getElementById("global-search");
     if (searchInput) {
         searchInput.addEventListener("input", (e) => {
@@ -1086,13 +1101,21 @@ function closePaymentHistoryModal() {
 }
 
 function renderOwnerDashboard() {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+    const ownerFilter = document.getElementById("owner-month-filter");
+    let targetMonth, targetYear;
+    if (ownerFilter && ownerFilter.value) {
+        const [y, m] = ownerFilter.value.split("-");
+        targetYear = parseInt(y, 10);
+        targetMonth = parseInt(m, 10) - 1; // 0-indexed month
+    } else {
+        const now = new Date();
+        targetMonth = now.getMonth();
+        targetYear = now.getFullYear();
+    }
 
     const isThisMonth = (timestamp) => {
         const d = new Date(timestamp);
-        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        return d.getMonth() === targetMonth && d.getFullYear() === targetYear;
     };
 
     const retailThisMonth = state.transactions.filter(tx => isThisMonth(tx.timestamp));
@@ -1226,13 +1249,21 @@ function renderOwnerSalesChart() {
 }
 
 function renderDashboard() {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+    const dbFilter = document.getElementById("dashboard-month-filter");
+    let targetMonth, targetYear;
+    if (dbFilter && dbFilter.value) {
+        const [y, m] = dbFilter.value.split("-");
+        targetYear = parseInt(y, 10);
+        targetMonth = parseInt(m, 10) - 1; // 0-indexed month
+    } else {
+        const now = new Date();
+        targetMonth = now.getMonth();
+        targetYear = now.getFullYear();
+    }
 
     const isThisMonth = (timestamp) => {
         const d = new Date(timestamp);
-        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        return d.getMonth() === targetMonth && d.getFullYear() === targetYear;
     };
 
     const retailThisMonth = state.transactions.filter(tx => isThisMonth(tx.timestamp));

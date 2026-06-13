@@ -180,9 +180,14 @@
 
             <!-- Dashboard Tab -->
             <section class="tab-pane active" id="tab-dashboard">
-                <div class="page-title-block">
-                    <h1>Dashboard Overview</h1>
-                    <p class="subtitle" id="dashboard-date-range">Today's business summary</p>
+                <div class="page-title-block flex-header">
+                    <div>
+                        <h1>Dashboard Overview</h1>
+                        <p class="subtitle" id="dashboard-date-range">Business summary for selected month</p>
+                    </div>
+                    <div class="header-actions">
+                        <input type="month" id="dashboard-month-filter" class="form-input" style="width: auto; padding: 6px 12px; height: 38px;">
+                    </div>
                 </div>
 
                 <!-- Stats Cards Row -->
@@ -313,9 +318,12 @@
                         <h1>Owner Dashboard</h1>
                         <p class="subtitle">Secure analytics & profit tracking</p>
                     </div>
-                    <button class="btn btn-secondary" onclick="openPasswordsModal()">
-                        <i class="fa-solid fa-lock"></i> Change Passwords
-                    </button>
+                    <div class="header-actions" style="display:flex; gap:10px; align-items:center;">
+                        <input type="month" id="owner-month-filter" class="form-input" style="width: auto; padding: 6px 12px; height: 38px;">
+                        <button class="btn btn-secondary" onclick="openPasswordsModal()">
+                            <i class="fa-solid fa-lock"></i> Change Passwords
+                        </button>
+                    </div>
                 </div>
                 <div class="stats-grid">
                     <div class="card stat-card sales-card">
