@@ -2470,7 +2470,7 @@ function viewWholesaleReceipt(invoiceId) {
     const s2 = state.settings.salesman2 || { name: "Mr. Kaveen", phone: "" };
     let printName = savedSalesman === "Kaveen" ? s2.name : s1.name;
     let printPhone = savedSalesman === "Kaveen" ? s2.phone : s1.phone;
-    const phoneStr = printPhone ? `<br><span style="font-size:0.85em">\${printPhone}</span>` : "";
+    const phoneStr = printPhone ? `<br><span style="font-size:0.85em">${printPhone}</span>` : "";
 
     container.innerHTML = `
         <div class="a4-invoice-wrapper">
