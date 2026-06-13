@@ -873,6 +873,44 @@ function renderCashCreditTab() {
         </tr>
         `;
     }).join('');
+
+    // Render settled accounts
+    const settledTbody = document.getElementById("cash-credit-settled-table-body");
+    if (settledTbody) {
+        let settledDebtors = state.customers.filter(c => {
+            if ((c.outstandingDebt || 0) > 0) return false;
+            
+            if (c.accountType === "cash-credit") return true;
+
+            const txs = state.wholesaleTransactions.filter(t => t.customer?.id === c.id);
+            for (let t of txs) {
+                if (t.paymentHistory && t.paymentHistory.some(ph => ph.method === "cash-credit")) {
+                    return true;
+                }
+            }
+            return false;
+        });
+
+        if (settledDebtors.length === 0) {
+            settledTbody.innerHTML = `<tr><td colspan="4" class="empty-state">No settled cash credit accounts found.</td></tr>`;
+        } else {
+            settledTbody.innerHTML = settledDebtors.map(c => `
+                <tr>
+                    <td style="font-weight: 500;">
+                        <div>${c.companyName || c.name}</div>
+                        ${c.companyName ? `<div style="font-size: 0.75rem; color: var(--text-muted);">${c.name}</div>` : ''}
+                    </td>
+                    <td>${c.phone || '-'}</td>
+                    <td><span class="badge badge-success" style="background: rgba(16, 185, 129, 0.1); color: var(--success);"><i class="fa-solid fa-check"></i> Fully Settled</span></td>
+                    <td>
+                        <button class="btn btn-secondary btn-xs" title="View Payment History" onclick="openPaymentHistoryModal('${c.id}')">
+                            <i class="fa-solid fa-clock-rotate-left"></i> View History
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+    }
 }
 
 function openManualCreditModal() {
