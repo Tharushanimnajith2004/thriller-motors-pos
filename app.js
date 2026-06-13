@@ -721,6 +721,17 @@ function switchTab(tabId) {
         state.isOwnerUnlocked = false;
     }
     
+    // Clear Wholesale POS selections when switching tabs
+    const wSearch = document.getElementById("w-cart-customer-search");
+    const wSalesman = document.getElementById("w-cart-salesman-select");
+    const wCustomer = document.getElementById("w-cart-customer-select");
+    if (wSearch) wSearch.value = "";
+    if (wSalesman) wSalesman.value = "";
+    if (wCustomer) wCustomer.value = "";
+    if (typeof renderWholesaleCartUI === "function") {
+        renderWholesaleCartUI();
+    }
+    
     state.activeTab = tabId;
     
     document.querySelectorAll(".sidebar-nav .nav-btn").forEach(btn => {
@@ -2138,7 +2149,7 @@ function renderWholesaleCartUI() {
                 (c.address && c.address.toLowerCase().includes(searchVal))
             );
         }
-        let optionsHtml = '<option value="" disabled selected>-- Select Customer --</option>';
+        let optionsHtml = `<option value="" disabled selected>-- Select Customer (\${filteredCustomers.length} found) --</option>`;
         optionsHtml += filteredCustomers.map(c => {
             const accType = c.creditLimit > 0 ? "Credit" : "Cash";
             return `<option value="${c.id}">${c.companyName || c.name} [${accType}] (${c.phone})</option>`;
