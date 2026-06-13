@@ -2557,12 +2557,14 @@ function setupWholesaleLedgerEvents() {
     document.getElementById("w-ledger-search")?.addEventListener("input", renderWholesaleLedger);
     document.getElementById("w-ledger-filter-status")?.addEventListener("change", renderWholesaleLedger);
     document.getElementById("w-ledger-filter-salesman")?.addEventListener("change", renderWholesaleLedger);
+    document.getElementById("w-ledger-filter-month")?.addEventListener("change", renderWholesaleLedger);
     
     document.getElementById("btn-w-ledger-reset")?.addEventListener("click", () => {
         document.getElementById("w-ledger-search").value = "";
         document.getElementById("w-ledger-filter-status").value = "all";
         const smSelect = document.getElementById("w-ledger-filter-salesman");
         if (smSelect) smSelect.value = "all";
+        document.getElementById("w-ledger-filter-month").value = "";
         renderWholesaleLedger();
     });
 
@@ -2605,11 +2607,21 @@ function renderWholesaleLedger() {
     const tbody = document.getElementById("w-ledger-tbody");
     if (!tbody) return;
 
-    // 1. Calculate Salesman performance dynamically from all wholesale transactions
+    const filterMonth = document.getElementById("w-ledger-filter-month")?.value || "";
+
+    let baseList = state.wholesaleTransactions;
+    if (filterMonth) {
+        baseList = baseList.filter(tx => {
+            const txDateStr = new Date(tx.timestamp).toISOString().substring(0, 7);
+            return txDateStr === filterMonth;
+        });
+    }
+
+    // 1. Calculate Salesman performance dynamically from filtered list
     let shemalSales = 0, shemalProfit = 0, shemalInvoices = 0;
     let kaveenSales = 0, kaveenProfit = 0, kaveenInvoices = 0;
 
-    state.wholesaleTransactions.forEach(tx => {
+    baseList.forEach(tx => {
         const salesman = tx.salesman || "Shemal";
         if (salesman === "Shemal") {
             shemalSales += tx.grandTotal;
@@ -2696,7 +2708,7 @@ function renderWholesaleLedger() {
     const filterStatus = document.getElementById("w-ledger-filter-status")?.value || "all";
     const filterSalesman = document.getElementById("w-ledger-filter-salesman")?.value || "all";
 
-    let list = state.wholesaleTransactions;
+    let list = baseList;
 
     // Apply status filter
     if (filterStatus === "unpaid") {
