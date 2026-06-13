@@ -2483,6 +2483,11 @@ function viewWholesaleReceipt(invoiceId) {
                         <td style="text-align:right; font-weight:bold; font-size: 1.1em; border-right:1px solid #000;">${gSplit.rs}</td>
                         <td style="text-align:right; font-weight:bold; font-size: 1.1em;">${gSplit.cts}</td>
                     </tr>
+                    <tr class="inv-total-row" style="background-color: rgba(16, 185, 129, 0.05);">
+                        <td colspan="6" style="text-align:left; font-weight:bold; font-size: 1.1em; color: #065f46;">Full Outstanding Total</td>
+                        <td style="text-align:right; font-weight:bold; font-size: 1.1em; border-right:1px solid #000; color: #065f46;">${splitMoney(fullCustomer?.outstandingDebt || tx.outstandingBalance || tx.grandTotal).rs}</td>
+                        <td style="text-align:right; font-weight:bold; font-size: 1.1em; color: #065f46;">${splitMoney(fullCustomer?.outstandingDebt || tx.outstandingBalance || tx.grandTotal).cts}</td>
+                    </tr>
                 </tfoot>
             </table>
 
