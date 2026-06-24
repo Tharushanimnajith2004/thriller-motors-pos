@@ -3061,6 +3061,41 @@ function closeDebtModal() {
     if (modal) modal.classList.remove("active");
 }
 
+function validateAndPushCheque(idField, customerObj, amount, salesman = null) {
+    const chqNum = document.getElementById("debt-cheque-number").value.trim();
+    const bank = document.getElementById("debt-cheque-bank").value.trim();
+    const branch = document.getElementById("debt-cheque-branch").value.trim();
+    const rDate = document.getElementById("debt-cheque-received-date").value;
+    const dDate = document.getElementById("debt-cheque-deposit-date").value;
+
+    if (!chqNum || !bank || !rDate || !dDate) {
+        alert("Please fill in all required Cheque details (Number, Bank, Received Date, Deposit Date).");
+        return false;
+    }
+
+    const chequeId = 'CHQ-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    
+    state.cheques.push({
+        id: chequeId,
+        chequeNumber: chqNum,
+        bankName: bank,
+        branchName: branch || "N/A",
+        receivedDate: rDate,
+        depositDate: dDate,
+        amount: amount,
+        status: "pending",
+        customer: {
+            id: customerObj.id,
+            name: customerObj.name,
+            companyName: customerObj.companyName || customerObj.name
+        },
+        invoiceId: idField.startsWith("CUST-") ? null : idField,
+        salesman: salesman || customerObj.salesman || "Shemal"
+    });
+    
+    return true;
+}
+
 function processDebtRepayment() {
     const idField = document.getElementById("debt-tx-id-field").value;
     const collectAmount = parseFloat(document.getElementById("debt-collect-amount").value) || 0;
@@ -3169,6 +3204,7 @@ function processDebtRepayment() {
         const chqNum = document.getElementById("debt-cheque-number").value.trim();
         triggerNotification("success", "Cheque Received", `Cheque ${chqNum} for ${state.settings.currency}${collectAmount.toFixed(2)} logged for ${companyName}.`);
         alert("Cheque received and logged successfully! Outstanding balance updated.");
+        switchTab("cheque-registry");
     } else if (paymentMethod === "cash-credit") {
         triggerNotification("success", "Moved to Cash Credit", `The invoice for ${companyName} has been officially recorded as Cash Credit.`);
         alert("Successfully registered under Cash Credit!");
