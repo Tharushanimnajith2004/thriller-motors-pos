@@ -1176,6 +1176,11 @@ function renderOwnerDashboard() {
     if(elTotal) elTotal.innerText = `${state.settings.currency}${totalRev.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     if(elCashSales) elCashSales.innerText = `${state.settings.currency}${totalCashSales.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     if(elCreditSales) elCreditSales.innerText = `${state.settings.currency}${totalCreditSales.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    
+    const totalAllDebt = state.customers.reduce((sum, c) => sum + (c.outstandingDebt || 0), 0);
+    const elAllDebt = document.getElementById("owner-stat-all-debt");
+    if(elAllDebt) elAllDebt.innerText = `${state.settings.currency}${totalAllDebt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    
     if(elProfit) elProfit.innerText = `${state.settings.currency}${netProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     
     const elDiscount = document.getElementById("owner-stat-total-discount");
