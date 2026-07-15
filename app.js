@@ -1865,16 +1865,18 @@ function renderCartUI() {
         `;
     }).join('');
 
-    const subtotal = state.cart.reduce((sum, item) => sum + (item.sellingPrice * item.qty), 0);
+    const subtotal = state.cart.reduce((sum, item) => sum + ((item.originalPrice || item.sellingPrice) * item.qty), 0);
+    const itemDiscounts = state.cart.reduce((sum, item) => sum + ((item.itemDiscount || 0) * item.qty), 0);
     const discVal = parseFloat(document.getElementById("cart-discount-input")?.value) || 0;
     const discType = document.getElementById("cart-discount-type")?.value || "percent";
-    const discAmount = discType === "percent" ? (subtotal * (discVal / 100)) : discVal;
-    const taxableTotal = Math.max(0, subtotal - discAmount);
+    const invoiceDiscAmount = discType === "percent" ? (subtotal * (discVal / 100)) : discVal;
+    const totalDiscAmount = invoiceDiscAmount + itemDiscounts;
+    const taxableTotal = Math.max(0, subtotal - totalDiscAmount);
     const taxAmount = taxableTotal * (taxRate / 100);
     const grandTotal = taxableTotal + taxAmount;
 
     subtotalEl.innerText = `${state.settings.currency}${subtotal.toFixed(2)}`;
-    discAmountEl.innerText = `-${state.settings.currency}${discAmount.toFixed(2)}`;
+    discAmountEl.innerText = `-${state.settings.currency}${totalDiscAmount.toFixed(2)}`;
     taxEl.innerText = `${state.settings.currency}${taxAmount.toFixed(2)}`;
     totalEl.innerText = `${state.settings.currency}${grandTotal.toFixed(2)}`;
 }
@@ -2327,16 +2329,18 @@ function renderWholesaleCartUI() {
         `;
     }).join('');
 
-    const subtotal = state.wholesaleCart.reduce((sum, item) => sum + (item.sellingPrice * item.qty), 0);
+    const subtotal = state.wholesaleCart.reduce((sum, item) => sum + ((item.originalPrice || item.sellingPrice) * item.qty), 0);
+    const itemDiscounts = state.wholesaleCart.reduce((sum, item) => sum + ((item.itemDiscount || 0) * item.qty), 0);
     const discVal = parseFloat(document.getElementById("w-cart-discount-input")?.value) || 0;
     const discType = document.getElementById("w-cart-discount-type")?.value || "percent";
-    const discAmount = discType === "percent" ? (subtotal * (discVal / 100)) : discVal;
-    const taxableTotal = Math.max(0, subtotal - discAmount);
+    const invoiceDiscAmount = discType === "percent" ? (subtotal * (discVal / 100)) : discVal;
+    const totalDiscAmount = invoiceDiscAmount + itemDiscounts;
+    const taxableTotal = Math.max(0, subtotal - totalDiscAmount);
     const taxAmount = taxableTotal * (taxRate / 100);
     const grandTotal = taxableTotal + taxAmount;
 
     subtotalEl.innerText = `${state.settings.currency}${subtotal.toFixed(2)}`;
-    discAmountEl.innerText = `-${state.settings.currency}${discAmount.toFixed(2)}`;
+    discAmountEl.innerText = `-${state.settings.currency}${totalDiscAmount.toFixed(2)}`;
     taxEl.innerText = `${state.settings.currency}${taxAmount.toFixed(2)}`;
     totalEl.innerText = `${state.settings.currency}${grandTotal.toFixed(2)}`;
 }
