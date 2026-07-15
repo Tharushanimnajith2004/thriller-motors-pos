@@ -1726,6 +1726,7 @@ function addProductToCart(productId) {
             sku: prod.sku,
             qty: 1,
             sellingPrice: prod.sellingPrice,
+            originalPrice: prod.sellingPrice,
             costPrice: prod.costPrice
         });
     }
@@ -1770,13 +1771,13 @@ window.setCartQty = function(idx, val) {
     renderCartUI();
 };
 
-window.setCartItemDiscount = function(idx, val) {
+window.setCartItemPrice = function(idx, val) {
     const item = state.cart[idx];
     if (!item) return;
-    let disc = parseFloat(val);
-    if (isNaN(disc) || disc < 0) disc = 0;
-    if (disc > item.sellingPrice) disc = item.sellingPrice;
-    item.itemDiscount = disc;
+    let newPrice = parseFloat(val);
+    if (isNaN(newPrice) || newPrice < 0) newPrice = 0;
+    item.sellingPrice = newPrice;
+    item.itemDiscount = Math.max(0, (item.originalPrice || item.sellingPrice) - newPrice);
     renderCartUI();
 };
 
@@ -1844,17 +1845,15 @@ function renderCartUI() {
 
     countEl.innerText = `${state.cart.reduce((sum, item) => sum + item.qty, 0)} items`;
     cartList.innerHTML = state.cart.map((item, idx) => {
-        const itemDisc = item.itemDiscount || 0;
-        const effectivePrice = Math.max(0, item.sellingPrice - itemDisc);
         return `
         <div class="cart-item">
             <div class="cart-item-details">
                 <span class="cart-item-name">${item.name}</span>
-                <span class="cart-item-price">${state.settings.currency}${(effectivePrice * item.qty).toFixed(2)}</span>
-                <div style="margin-top: 4px; font-size: 0.75rem; display: flex; align-items: center; gap: 5px;">
-                    <span style="color:var(--text-muted);">Discount (${state.settings.currency}):</span>
-                    <input type="number" value="${itemDisc}" min="0" step="any" onchange="setCartItemDiscount(${idx}, this.value)" style="width: 60px; padding: 2px; font-size:0.75rem; text-align:center; border:1px solid var(--border-color); background:transparent; color:var(--text-main); border-radius:4px; outline:none; -moz-appearance:textfield;">
-                </div>
+                <span class="cart-item-price" style="display:flex; align-items:center; gap:4px; margin-top:4px;">
+                    <span style="color:var(--text-muted); font-size: 0.8rem;">${state.settings.currency}</span>
+                    <input type="number" value="${item.sellingPrice}" step="any" onchange="setCartItemPrice(${idx}, this.value)" style="width: 75px; padding: 2px; font-size:0.85rem; font-weight:600; text-align:left; border:1px solid var(--border-color); background:transparent; color:var(--purple-500); border-radius:4px; outline:none; -moz-appearance:textfield;">
+                    <span style="font-size:0.75rem; color:var(--text-muted); margin-left: 5px;">(Total: ${(item.sellingPrice * item.qty).toFixed(2)})</span>
+                </span>
             </div>
             <div class="cart-item-qty">
                 <button class="qty-btn" onclick="updateCartQty(${idx}, -1)"><i class="fa-solid fa-minus"></i></button>
@@ -1901,7 +1900,7 @@ function processCartCheckout() {
     }
 
     const taxRate = parseFloat(state.settings.taxRate) || 0;
-    const subtotal = state.cart.reduce((sum, item) => sum + (item.sellingPrice * item.qty), 0);
+    const subtotal = state.cart.reduce((sum, item) => sum + ((item.originalPrice || item.sellingPrice) * item.qty), 0);
     const itemDiscounts = state.cart.reduce((sum, item) => sum + ((item.itemDiscount || 0) * item.qty), 0);
     const discVal = parseFloat(document.getElementById("cart-discount-input")?.value) || 0;
     const discType = document.getElementById("cart-discount-type")?.value || "percent";
@@ -2146,6 +2145,7 @@ function addProductToWholesaleCart(productId) {
             sku: prod.sku,
             qty: 1,
             sellingPrice: wholesalePrice,
+            originalPrice: wholesalePrice,
             costPrice: prod.costPrice,
             pkgUnit: prod.pkgUnit || "1 Liter"
         });
@@ -2193,13 +2193,13 @@ window.setWholesaleCartQty = function(idx, val) {
     renderWholesaleCartUI();
 };
 
-window.setWholesaleCartItemDiscount = function(idx, val) {
+window.setWholesaleCartItemPrice = function(idx, val) {
     const item = state.wholesaleCart[idx];
     if (!item) return;
-    let disc = parseFloat(val);
-    if (isNaN(disc) || disc < 0) disc = 0;
-    if (disc > item.sellingPrice) disc = item.sellingPrice;
-    item.itemDiscount = disc;
+    let newPrice = parseFloat(val);
+    if (isNaN(newPrice) || newPrice < 0) newPrice = 0;
+    item.sellingPrice = newPrice;
+    item.itemDiscount = Math.max(0, (item.originalPrice || item.sellingPrice) - newPrice);
     renderWholesaleCartUI();
 };
 
@@ -2306,18 +2306,16 @@ function renderWholesaleCartUI() {
     countEl.innerText = `${totalPacks} items`;
 
     cartList.innerHTML = state.wholesaleCart.map((item, idx) => {
-        const itemDisc = item.itemDiscount || 0;
-        const effectivePrice = Math.max(0, item.sellingPrice - itemDisc);
         return `
         <div class="cart-item border-wholesale">
             <div class="cart-item-details">
                 <span class="cart-item-name">${item.name}</span>
-                <span class="cart-item-price" style="color:var(--purple-500);">${state.settings.currency}${(effectivePrice * item.qty).toFixed(2)}</span>
                 <span style="font-size:0.65rem; color:var(--text-muted);">${item.pkgUnit} (${item.qty} units total)</span>
-                <div style="margin-top: 4px; font-size: 0.75rem; display: flex; align-items: center; gap: 5px;">
-                    <span style="color:var(--text-muted);">Discount (${state.settings.currency}):</span>
-                    <input type="number" value="${itemDisc}" min="0" step="any" onchange="setWholesaleCartItemDiscount(${idx}, this.value)" style="width: 60px; padding: 2px; font-size:0.75rem; text-align:center; border:1px solid var(--border-color); background:transparent; color:var(--text-main); border-radius:4px; outline:none; -moz-appearance:textfield;">
-                </div>
+                <span class="cart-item-price" style="display:flex; align-items:center; gap:4px; margin-top:4px;">
+                    <span style="color:var(--text-muted); font-size: 0.8rem;">${state.settings.currency}</span>
+                    <input type="number" value="${item.sellingPrice}" step="any" onchange="setWholesaleCartItemPrice(${idx}, this.value)" style="width: 75px; padding: 2px; font-size:0.85rem; font-weight:600; text-align:left; border:1px solid var(--border-color); background:transparent; color:var(--purple-500); border-radius:4px; outline:none; -moz-appearance:textfield;">
+                    <span style="font-size:0.75rem; color:var(--text-muted); margin-left: 5px;">(Total: ${(item.sellingPrice * item.qty).toFixed(2)})</span>
+                </span>
             </div>
             <div class="cart-item-qty">
                 <button class="qty-btn" onclick="updateWholesaleCartQty(${idx}, -1)"><i class="fa-solid fa-minus"></i></button>
@@ -2394,7 +2392,7 @@ function processWholesaleCheckout() {
 
     // 1. Math aggregates
     const taxRate = parseFloat(state.settings.taxRate) || 0;
-    const subtotal = state.wholesaleCart.reduce((sum, item) => sum + (item.sellingPrice * item.qty), 0);
+    const subtotal = state.wholesaleCart.reduce((sum, item) => sum + ((item.originalPrice || item.sellingPrice) * item.qty), 0);
     const itemDiscounts = state.wholesaleCart.reduce((sum, item) => sum + ((item.itemDiscount || 0) * item.qty), 0);
     const discVal = parseFloat(document.getElementById("w-cart-discount-input")?.value) || 0;
     const discType = document.getElementById("w-cart-discount-type")?.value || "percent";
@@ -2541,14 +2539,15 @@ function viewWholesaleReceipt(invoiceId) {
     let itemsRows = '';
     for (let i = 0; i < tx.items.length; i++) {
         const item = tx.items[i];
-        const rowTotal = item.qty * item.sellingPrice;
+        const unitPrice = item.originalPrice || item.sellingPrice;
+        const rowTotal = item.qty * unitPrice;
         const tSplit = splitMoney(rowTotal);
         itemsRows += `
             <tr>
                 <td>${item.sku || '-'}</td>
                 <td>${item.name}</td>
                 <td style="text-align:center;">${item.qty}</td>
-                <td style="text-align:right;">${item.sellingPrice.toFixed(2)}</td>
+                <td style="text-align:right;">${unitPrice.toFixed(2)}</td>
                 <td></td> <!-- Free -->
                 <td></td> <!-- Dis % -->
                 <td style="text-align:right; border-right:1px solid #000;">${tSplit.rs}</td>
@@ -3842,14 +3841,15 @@ function viewReceipt(receiptId) {
     let itemsRows = '';
     for (let i = 0; i < tx.items.length; i++) {
         const item = tx.items[i];
-        const rowTotal = item.qty * item.sellingPrice;
+        const unitPrice = item.originalPrice || item.sellingPrice;
+        const rowTotal = item.qty * unitPrice;
         const tSplit = splitMoney(rowTotal);
         itemsRows += `
             <tr>
                 <td>${item.sku || '-'}</td>
                 <td>${item.name}</td>
                 <td style="text-align:center;">${item.qty}</td>
-                <td style="text-align:right;">${item.sellingPrice.toFixed(2)}</td>
+                <td style="text-align:right;">${unitPrice.toFixed(2)}</td>
                 <td></td> <!-- Free -->
                 <td></td> <!-- Dis % -->
                 <td style="text-align:right; border-right:1px solid #000;">${tSplit.rs}</td>
@@ -3933,9 +3933,21 @@ function viewReceipt(receiptId) {
                 </tbody>
                 <tfoot>
                     <tr class="inv-total-row">
-                        <td colspan="6" style="text-align:left; font-weight:bold;">Total</td>
-                        <td style="text-align:right; font-weight:bold; border-right:1px solid #000;">${gSplit.rs}</td>
-                        <td style="text-align:right; font-weight:bold;">${gSplit.cts}</td>
+                        <td colspan="6" style="text-align:left; font-weight:bold;">Subtotal</td>
+                        <td style="text-align:right; font-weight:bold; border-right:1px solid #000;">${splitMoney(tx.subtotal || tx.grandTotal).rs}</td>
+                        <td style="text-align:right; font-weight:bold;">${splitMoney(tx.subtotal || tx.grandTotal).cts}</td>
+                    </tr>
+                    ${(tx.discountAmount || 0) > 0 ? `
+                    <tr>
+                        <td colspan="6" style="text-align:left; font-weight:bold;">Discount Amount (-)</td>
+                        <td style="text-align:right; font-weight:bold; border-right:1px solid #000; color: #d32f2f;">${splitMoney(tx.discountAmount).rs}</td>
+                        <td style="text-align:right; font-weight:bold; color: #d32f2f;">${splitMoney(tx.discountAmount).cts}</td>
+                    </tr>
+                    ` : ''}
+                    <tr class="inv-total-row">
+                        <td colspan="6" style="text-align:left; font-weight:bold; font-size: 1.1em;">Total Amount</td>
+                        <td style="text-align:right; font-weight:bold; font-size: 1.1em; border-right:1px solid #000;">${gSplit.rs}</td>
+                        <td style="text-align:right; font-weight:bold; font-size: 1.1em;">${gSplit.cts}</td>
                     </tr>
                 </tfoot>
             </table>
