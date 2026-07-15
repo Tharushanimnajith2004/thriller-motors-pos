@@ -477,11 +477,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (e.key === "Enter") handleLogin();
             });
         }
-        if(loginUser) {
-            loginUser.addEventListener("keypress", (e) => {
-                if (e.key === "Enter") handleLogin();
-            });
-        }
     }
     
     // Apply Settings
