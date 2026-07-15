@@ -3387,6 +3387,33 @@ function getFilteredProducts() {
     return list;
 }
 
+window.downloadStockReportCSV = function() {
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "SKU,Product Name,Category,Cost Price,Retail Price,Wholesale Price,Stock Quantity\n";
+
+    state.products.forEach(p => {
+        if (p.isBundle) return;
+        const sku = p.sku || '-';
+        const name = `"${(p.name || '').replace(/"/g, '""')}"`;
+        const category = `"${(p.category || 'Uncategorized').replace(/"/g, '""')}"`;
+        const cost = p.costPrice || 0;
+        const retail = p.sellingPrice || 0;
+        const wholesale = p.wholesalePrice || 0;
+        const qty = getProductStock(p) || 0;
+
+        csvContent += `${sku},${name},${category},${cost},${retail},${wholesale},${qty}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    const dateStr = new Date().toISOString().split('T')[0];
+    link.setAttribute("download", `Stock_Report_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
 function renderInventory() {
     const tbody = document.getElementById("inventory-tbody");
     if (!tbody) return;
