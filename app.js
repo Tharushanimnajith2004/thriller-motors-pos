@@ -1129,6 +1129,10 @@ function renderOwnerDashboard() {
     const profitWholesale = wholesaleThisMonth.reduce((sum, tx) => sum + tx.profit, 0);
     const totalProfit = profitRetail + profitWholesale;
 
+    const discountRetail = retailThisMonth.reduce((sum, tx) => sum + (tx.discountAmount || 0), 0);
+    const discountWholesale = wholesaleThisMonth.reduce((sum, tx) => sum + (tx.discountAmount || 0), 0);
+    const totalDiscount = discountRetail + discountWholesale;
+
     let totalCashSales = totalRetail;
     let totalCreditSales = 0;
 
@@ -1157,6 +1161,9 @@ function renderOwnerDashboard() {
     if(elCashSales) elCashSales.innerText = `${state.settings.currency}${totalCashSales.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     if(elCreditSales) elCreditSales.innerText = `${state.settings.currency}${totalCreditSales.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     if(elProfit) elProfit.innerText = `${state.settings.currency}${netProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    
+    const elDiscount = document.getElementById("owner-stat-total-discount");
+    if(elDiscount) elDiscount.innerText = `${state.settings.currency}${totalDiscount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
     const totalStockValue = state.products.reduce((sum, p) => {
         if (p.isBundle) return sum;
