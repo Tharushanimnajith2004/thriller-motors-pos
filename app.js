@@ -446,7 +446,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const loginScreen = document.getElementById("login-screen");
     const appContainer = document.querySelector(".app-container");
     const btnLogin = document.getElementById("btn-login");
-    const loginUser = document.getElementById("login-username");
     const loginPass = document.getElementById("login-password");
     const loginError = document.getElementById("login-error");
 
@@ -457,11 +456,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         if(appContainer) appContainer.style.display = "none"; // Hide main app
         
         const handleLogin = () => {
-            const enteredUser = loginUser ? loginUser.value.trim() : "";
             const enteredPass = loginPass.value;
             const currentSysPass = state.settings.systemPassword || "Thriller123";
             
-            if (enteredUser === "Thrillermotors" && enteredPass === currentSysPass) {
+            if (enteredPass === currentSysPass) {
                 sessionStorage.setItem("ss_logged_in", "true");
                 loginScreen.style.opacity = "0";
                 appContainer.style.display = "flex"; // Restore flex layout
@@ -469,8 +467,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             } else {
                 loginError.style.display = "block";
                 loginPass.value = "";
-                if(loginUser) loginUser.value = "";
-                if(loginUser) loginUser.focus();
+                loginPass.focus();
             }
         };
 
