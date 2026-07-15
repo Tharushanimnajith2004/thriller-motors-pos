@@ -1770,6 +1770,16 @@ window.setCartQty = function(idx, val) {
     renderCartUI();
 };
 
+window.setCartItemDiscount = function(idx, val) {
+    const item = state.cart[idx];
+    if (!item) return;
+    let disc = parseFloat(val);
+    if (isNaN(disc) || disc < 0) disc = 0;
+    if (disc > item.sellingPrice) disc = item.sellingPrice;
+    item.itemDiscount = disc;
+    renderCartUI();
+};
+
 function removeCartItem(idx) {
     state.cart.splice(idx, 1);
     renderCartUI();
@@ -1833,11 +1843,18 @@ function renderCartUI() {
     }
 
     countEl.innerText = `${state.cart.reduce((sum, item) => sum + item.qty, 0)} items`;
-    cartList.innerHTML = state.cart.map((item, idx) => `
+    cartList.innerHTML = state.cart.map((item, idx) => {
+        const itemDisc = item.itemDiscount || 0;
+        const effectivePrice = Math.max(0, item.sellingPrice - itemDisc);
+        return `
         <div class="cart-item">
             <div class="cart-item-details">
                 <span class="cart-item-name">${item.name}</span>
-                <span class="cart-item-price">${state.settings.currency}${(item.sellingPrice * item.qty).toFixed(2)}</span>
+                <span class="cart-item-price">${state.settings.currency}${(effectivePrice * item.qty).toFixed(2)}</span>
+                <div style="margin-top: 4px; font-size: 0.75rem; display: flex; align-items: center; gap: 5px;">
+                    <span style="color:var(--text-muted);">Discount (${state.settings.currency}):</span>
+                    <input type="number" value="${itemDisc}" min="0" step="any" onchange="setCartItemDiscount(${idx}, this.value)" style="width: 60px; padding: 2px; font-size:0.75rem; text-align:center; border:1px solid var(--border-color); background:transparent; color:var(--text-main); border-radius:4px; outline:none; -moz-appearance:textfield;">
+                </div>
             </div>
             <div class="cart-item-qty">
                 <button class="qty-btn" onclick="updateCartQty(${idx}, -1)"><i class="fa-solid fa-minus"></i></button>
@@ -1846,7 +1863,8 @@ function renderCartUI() {
             </div>
             <button class="cart-item-remove" onclick="removeCartItem(${idx})"><i class="fa-solid fa-trash-can"></i></button>
         </div>
-    `).join('');
+        `;
+    }).join('');
 
     const subtotal = state.cart.reduce((sum, item) => sum + (item.sellingPrice * item.qty), 0);
     const discVal = parseFloat(document.getElementById("cart-discount-input")?.value) || 0;
@@ -1884,10 +1902,13 @@ function processCartCheckout() {
 
     const taxRate = parseFloat(state.settings.taxRate) || 0;
     const subtotal = state.cart.reduce((sum, item) => sum + (item.sellingPrice * item.qty), 0);
+    const itemDiscounts = state.cart.reduce((sum, item) => sum + ((item.itemDiscount || 0) * item.qty), 0);
     const discVal = parseFloat(document.getElementById("cart-discount-input")?.value) || 0;
     const discType = document.getElementById("cart-discount-type")?.value || "percent";
-    const discAmount = discType === "percent" ? (subtotal * (discVal / 100)) : discVal;
-    const taxable = Math.max(0, subtotal - discAmount);
+    const invoiceDiscAmount = discType === "percent" ? (subtotal * (discVal / 100)) : discVal;
+    const totalDiscAmount = invoiceDiscAmount + itemDiscounts;
+    
+    const taxable = Math.max(0, subtotal - totalDiscAmount);
     const taxAmount = taxable * (taxRate / 100);
     const grandTotal = taxable + taxAmount;
 
@@ -1911,7 +1932,7 @@ function processCartCheckout() {
         paymentMethod: document.querySelector('input[name="payment-method"]:checked')?.value || "cash",
         subtotal: subtotal,
         discountPercent: discType === "percent" ? discVal : 0,
-        discountAmount: discAmount,
+        discountAmount: totalDiscAmount,
         taxPercent: taxRate,
         taxAmount: taxAmount,
         grandTotal: grandTotal,
@@ -2172,6 +2193,16 @@ window.setWholesaleCartQty = function(idx, val) {
     renderWholesaleCartUI();
 };
 
+window.setWholesaleCartItemDiscount = function(idx, val) {
+    const item = state.wholesaleCart[idx];
+    if (!item) return;
+    let disc = parseFloat(val);
+    if (isNaN(disc) || disc < 0) disc = 0;
+    if (disc > item.sellingPrice) disc = item.sellingPrice;
+    item.itemDiscount = disc;
+    renderWholesaleCartUI();
+};
+
 function removeWholesaleCartItem(idx) {
     state.wholesaleCart.splice(idx, 1);
     renderWholesaleCartUI();
@@ -2274,12 +2305,19 @@ function renderWholesaleCartUI() {
     const totalPacks = state.wholesaleCart.reduce((sum, item) => sum + item.qty, 0);
     countEl.innerText = `${totalPacks} items`;
 
-    cartList.innerHTML = state.wholesaleCart.map((item, idx) => `
+    cartList.innerHTML = state.wholesaleCart.map((item, idx) => {
+        const itemDisc = item.itemDiscount || 0;
+        const effectivePrice = Math.max(0, item.sellingPrice - itemDisc);
+        return `
         <div class="cart-item border-wholesale">
             <div class="cart-item-details">
                 <span class="cart-item-name">${item.name}</span>
-                <span class="cart-item-price" style="color:var(--purple-500);">${state.settings.currency}${(item.sellingPrice * item.qty).toFixed(2)}</span>
+                <span class="cart-item-price" style="color:var(--purple-500);">${state.settings.currency}${(effectivePrice * item.qty).toFixed(2)}</span>
                 <span style="font-size:0.65rem; color:var(--text-muted);">${item.pkgUnit} (${item.qty} units total)</span>
+                <div style="margin-top: 4px; font-size: 0.75rem; display: flex; align-items: center; gap: 5px;">
+                    <span style="color:var(--text-muted);">Discount (${state.settings.currency}):</span>
+                    <input type="number" value="${itemDisc}" min="0" step="any" onchange="setWholesaleCartItemDiscount(${idx}, this.value)" style="width: 60px; padding: 2px; font-size:0.75rem; text-align:center; border:1px solid var(--border-color); background:transparent; color:var(--text-main); border-radius:4px; outline:none; -moz-appearance:textfield;">
+                </div>
             </div>
             <div class="cart-item-qty">
                 <button class="qty-btn" onclick="updateWholesaleCartQty(${idx}, -1)"><i class="fa-solid fa-minus"></i></button>
@@ -2288,7 +2326,8 @@ function renderWholesaleCartUI() {
             </div>
             <button class="cart-item-remove" onclick="removeWholesaleCartItem(${idx})"><i class="fa-solid fa-trash-can"></i></button>
         </div>
-    `).join('');
+        `;
+    }).join('');
 
     const subtotal = state.wholesaleCart.reduce((sum, item) => sum + (item.sellingPrice * item.qty), 0);
     const discVal = parseFloat(document.getElementById("w-cart-discount-input")?.value) || 0;
@@ -2356,10 +2395,13 @@ function processWholesaleCheckout() {
     // 1. Math aggregates
     const taxRate = parseFloat(state.settings.taxRate) || 0;
     const subtotal = state.wholesaleCart.reduce((sum, item) => sum + (item.sellingPrice * item.qty), 0);
+    const itemDiscounts = state.wholesaleCart.reduce((sum, item) => sum + ((item.itemDiscount || 0) * item.qty), 0);
     const discVal = parseFloat(document.getElementById("w-cart-discount-input")?.value) || 0;
     const discType = document.getElementById("w-cart-discount-type")?.value || "percent";
-    const discAmount = discType === "percent" ? (subtotal * (discVal / 100)) : discVal;
-    const taxable = Math.max(0, subtotal - discAmount);
+    const invoiceDiscAmount = discType === "percent" ? (subtotal * (discVal / 100)) : discVal;
+    const totalDiscAmount = invoiceDiscAmount + itemDiscounts;
+    
+    const taxable = Math.max(0, subtotal - totalDiscAmount);
     const taxAmount = taxable * (taxRate / 100);
     const grandTotal = taxable + taxAmount;
 
@@ -2441,7 +2483,7 @@ function processWholesaleCheckout() {
         paymentMethod: billingType === "credit" ? "store-credit" : billingType,
         subtotal: subtotal,
         discountPercent: discType === "percent" ? discVal : 0,
-        discountAmount: discAmount,
+        discountAmount: totalDiscAmount,
         taxPercent: taxRate,
         taxAmount: taxAmount,
         grandTotal: grandTotal,
