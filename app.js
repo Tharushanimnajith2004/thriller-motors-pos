@@ -845,6 +845,7 @@ function renderCashCreditTab() {
         let refDate = null;
         let daysDiff = -1;
         
+        let unpaidTxsArr = [];
         if (c.customDebtDate) {
             refDate = new Date(c.customDebtDate);
         } else {
@@ -852,6 +853,7 @@ function renderCashCreditTab() {
             if (unpaidTxs.length > 0) {
                 unpaidTxs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
                 refDate = new Date(unpaidTxs[0].timestamp);
+                unpaidTxsArr = unpaidTxs;
             }
         }
 
@@ -859,7 +861,7 @@ function renderCashCreditTab() {
             daysDiff = Math.floor((now - refDate) / (1000 * 60 * 60 * 24));
         }
         
-        return { ...c, tempDaysDiff: daysDiff };
+        return { ...c, tempDaysDiff: daysDiff, unpaidTxs: unpaidTxsArr };
     });
 
     // Sort descending by days due
@@ -880,6 +882,17 @@ function renderCashCreditTab() {
             }
         }
 
+        let invoiceListHtml = '';
+        if (c.unpaidTxs && c.unpaidTxs.length > 0) {
+            invoiceListHtml = '<div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; line-height: 1.2;">';
+            invoiceListHtml += c.unpaidTxs.map(t => {
+                const date = new Date(t.timestamp).toLocaleDateString('en-GB');
+                const invId = t.id.replace('W-INV-', '').replace('TX-', '');
+                return `Inv #${invId} (${date})`;
+            }).join('<br>');
+            invoiceListHtml += '</div>';
+        }
+
         return `
         <tr>
             <td style="font-weight: 500;">
@@ -888,7 +901,10 @@ function renderCashCreditTab() {
             </td>
             <td>${c.phone || '-'}</td>
             <td>${state.settings.currency}${(c.creditLimit || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-            <td style="color: var(--danger); font-weight: 600;">${state.settings.currency}${c.outstandingDebt.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+            <td>
+                <span style="color: var(--danger); font-weight: 600;">${state.settings.currency}${c.outstandingDebt.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                ${invoiceListHtml}
+            </td>
             <td>${ageDisplay}</td>
             <td>
                 <div style="display:flex; gap: 8px;">
