@@ -768,6 +768,8 @@ function switchTab(tabId) {
         renderDashboard();
     } else if (tabId === "owner") {
         renderOwnerDashboard();
+    } else if (tabId === "reports") {
+        renderReports();
     } else if (tabId === "pos") {
         renderPOSCatalog();
     } else if (tabId === "wholesale-pos") {
@@ -2751,6 +2753,13 @@ function setupWholesaleLedgerEvents() {
         renderWholesaleLedger();
     });
 
+    document.getElementById("btn-export-shemal")?.addEventListener("click", () => {
+        if(window.exportSalesmanCustomersCSV) window.exportSalesmanCustomersCSV("Shemal");
+    });
+    document.getElementById("btn-export-kaveen")?.addEventListener("click", () => {
+        if(window.exportSalesmanCustomersCSV) window.exportSalesmanCustomersCSV("Kaveen");
+    });
+
     // Settle Modal Dismiss triggers
     document.getElementById("btn-close-debt-modal")?.addEventListener("click", closeDebtModal);
     document.getElementById("btn-cancel-debt-modal")?.addEventListener("click", closeDebtModal);
@@ -3401,6 +3410,41 @@ window.downloadStockReportCSV = function() {
     link.setAttribute("href", encodedUri);
     const dateStr = new Date().toISOString().split('T')[0];
     link.setAttribute("download", `Stock_Report_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+window.exportSalesmanCustomersCSV = function(salesman) {
+    let customers;
+    if (salesman === "All") {
+        customers = state.customers;
+    } else if (salesman === "Shemal") {
+        customers = state.customers.filter(c => c.isWholesale && (c.salesman || "Shemal") === "Shemal");
+    } else {
+        customers = state.customers.filter(c => c.isWholesale && c.salesman === salesman);
+    }
+    
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Customer Name,Company Name,Phone,Email,Address,Credit Limit,Outstanding Debt\n";
+
+    customers.forEach(c => {
+        const name = `"${(c.name || '').replace(/"/g, '""')}"`;
+        const company = `"${(c.companyName || '').replace(/"/g, '""')}"`;
+        const phone = `"${(c.phone || '').replace(/"/g, '""')}"`;
+        const email = `"${(c.email || '').replace(/"/g, '""')}"`;
+        const address = `"${(c.address || '').replace(/"/g, '""')}"`;
+        const limit = c.creditLimit || 0;
+        const debt = c.outstandingDebt || 0;
+
+        csvContent += `${name},${company},${phone},${email},${address},${limit},${debt}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    const dateStr = new Date().toISOString().split('T')[0];
+    link.setAttribute("download", `${salesman}_Customers_${dateStr}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -4063,6 +4107,10 @@ function setupCustomerEvents() {
             openCustomerModal();
         });
     }
+
+    document.getElementById("btn-export-customers-page")?.addEventListener("click", () => {
+        if(window.exportSalesmanCustomersCSV) window.exportSalesmanCustomersCSV("All");
+    });
 
     document.getElementById("btn-close-customer-modal")?.addEventListener("click", closeCustomerModal);
     document.getElementById("btn-cancel-customer-modal")?.addEventListener("click", closeCustomerModal);
@@ -5918,4 +5966,184 @@ async function changeOwnerPassword() {
     } else {
         alert("Incorrect current password! Action denied.");
     }
+}
+
+// --- REPORTS MODULE ---
+function renderReports() {
+    const monthFilter = document.getElementById("report-month-filter");
+    const typeFilter = document.getElementById("report-type-filter");
+    
+    // Set default month to current month if empty
+    if (!monthFilter.value) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        monthFilter.value = `${year}-${month}`;
+    }
+    
+    // Add event listeners if not already added
+    if (!monthFilter.dataset.listenerAdded) {
+        monthFilter.addEventListener("change", generateMonthlyItemReport);
+        typeFilter.addEventListener("change", generateMonthlyItemReport);
+        monthFilter.dataset.listenerAdded = "true";
+    }
+    
+    generateMonthlyItemReport();
+}
+
+function generateMonthlyItemReport() {
+    const monthFilter = document.getElementById("report-month-filter").value;
+    const typeFilter = document.getElementById("report-type-filter").value;
+    const tbody = document.getElementById("report-items-tbody");
+    const tfoot = document.getElementById("report-items-tfoot");
+    
+    if (!monthFilter) return;
+    
+    const [yearStr, monthStr] = monthFilter.split('-');
+    const targetYear = parseInt(yearStr);
+    const targetMonth = parseInt(monthStr) - 1; // 0-indexed
+    
+    // Aggregate items
+    const itemMap = {};
+    
+    // Helper to process transactions
+    const processTx = (txList, isWholesale) => {
+        txList.forEach(tx => {
+            const txDate = new Date(tx.timestamp);
+            if (txDate.getFullYear() === targetYear && txDate.getMonth() === targetMonth) {
+                // If it's wholesale transaction, there might be items array
+                const items = tx.items || [];
+                items.forEach(item => {
+                    const key = item.id || item.sku || item.name;
+                    if (!itemMap[key]) {
+                        itemMap[key] = {
+                            name: item.name,
+                            sku: item.sku || "N/A",
+                            category: item.category || "General",
+                            qty: 0,
+                            salesAmount: 0,
+                            profit: 0
+                        };
+                    }
+                    
+                    const qty = parseFloat(item.qty) || 0;
+                    const sp = parseFloat(item.sellingPrice) || 0;
+                    const cp = parseFloat(item.costPrice) || 0;
+                    // for wholesale, there might be unitPrice instead of sellingPrice
+                    const finalSp = sp || parseFloat(item.unitPrice) || 0;
+                    
+                    itemMap[key].qty += qty;
+                    itemMap[key].salesAmount += qty * finalSp;
+                    itemMap[key].profit += qty * (finalSp - cp);
+                });
+            }
+        });
+    };
+    
+    if (typeFilter === "all" || typeFilter === "retail") {
+        processTx(state.transactions, false);
+    }
+    if (typeFilter === "all" || typeFilter === "wholesale") {
+        processTx(state.wholesaleTransactions, true);
+    }
+    
+    // Render table
+    tbody.innerHTML = "";
+    let totalQty = 0;
+    let totalAmount = 0;
+    let totalProfit = 0;
+    
+    const sortedItems = Object.values(itemMap).sort((a, b) => b.qty - a.qty);
+    
+    if (sortedItems.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No items sold in this period.</td></tr>`;
+    } else {
+        sortedItems.forEach(item => {
+            totalQty += item.qty;
+            totalAmount += item.salesAmount;
+            totalProfit += item.profit;
+            
+            tbody.innerHTML += `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>${item.sku}</td>
+                    <td>${item.category}</td>
+                    <td>${item.qty}</td>
+                    <td>${formatCurrency(item.salesAmount)}</td>
+                    <td style="color:var(--success-color); font-weight:600;">${formatCurrency(item.profit)}</td>
+                </tr>
+            `;
+        });
+    }
+    
+    tfoot.innerHTML = `
+        <tr style="font-weight:bold; background:var(--bg-card);">
+            <td colspan="3" style="text-align:right;">TOTAL:</td>
+            <td>${totalQty}</td>
+            <td>${formatCurrency(totalAmount)}</td>
+            <td style="color:var(--success-color);">${formatCurrency(totalProfit)}</td>
+        </tr>
+    `;
+}
+
+function printMonthlyItemReport() {
+    const monthFilter = document.getElementById("report-month-filter").value;
+    const typeFilter = document.getElementById("report-type-filter");
+    const typeText = typeFilter.options[typeFilter.selectedIndex].text;
+    
+    if (!monthFilter) return;
+    
+    const [yearStr, monthStr] = monthFilter.split('-');
+    const reportDate = `${yearStr} - Month ${monthStr}`;
+    
+    const printWindow = window.open('', '_blank');
+    const tbodyHtml = document.getElementById("report-items-tbody").innerHTML;
+    const tfootHtml = document.getElementById("report-items-tfoot").innerHTML;
+    
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>Monthly Items Sold Report</title>
+            <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; padding: 20px; }
+                h1 { text-align: center; margin-bottom: 5px; }
+                h3 { text-align: center; color: #666; margin-top: 0; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+                th { background-color: #f4f4f4; }
+                .success { color: #16a34a; font-weight: 600; }
+                .right { text-align: right; }
+            </style>
+        </head>
+        <body>
+            <h1>Items Sold Report</h1>
+            <h3>Period: ${reportDate} | Type: ${typeText}</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item Name</th>
+                        <th>SKU</th>
+                        <th>Category</th>
+                        <th>Qty Sold</th>
+                        <th>Total Sales Amount</th>
+                        <th>Total Profit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tbodyHtml}
+                </tbody>
+                <tfoot>
+                    ${tfootHtml}
+                </tfoot>
+            </table>
+            <div style="margin-top: 30px; text-align: center; font-size: 0.9em; color: #777;">
+                Generated by Thriller Motors POS System
+            </div>
+            <script>
+                window.onload = function() { window.print(); }
+            </script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
 }

@@ -117,6 +117,10 @@
                     <i class="fa-solid fa-wallet"></i>
                     <span>Expenses</span>
                 </button>
+                <button class="nav-btn" data-tab="reports" id="btn-tab-reports">
+                    <i class="fa-solid fa-chart-bar"></i>
+                    <span>Reports</span>
+                </button>
                 <button class="nav-btn" data-tab="settings" id="btn-tab-settings">
                     <i class="fa-solid fa-sliders"></i>
                     <span>Settings</span>
@@ -713,7 +717,10 @@
                         <div class="salesman-customers-section" style="border-top: 1px solid var(--border-color); padding-top: 10px; font-size: 0.8rem;">
                             <div style="font-weight: 600; color: var(--purple-500); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
                                 <span>Assigned B2B Customers</span>
-                                <span class="badge" id="shemal-cust-badge" style="background: rgba(168, 85, 247, 0.15); color: var(--purple-500); font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; border: 1px solid rgba(168, 85, 247, 0.3);">0 Customers</span>
+                                <div style="display: flex; gap: 5px; align-items: center;">
+                                    <button id="btn-export-shemal" class="btn btn-secondary btn-icon-only" title="Export to Excel" style="height: 24px; width: 24px; min-width: 24px; padding: 0; font-size: 0.7rem;"><i class="fa-solid fa-file-excel"></i></button>
+                                    <span class="badge" id="shemal-cust-badge" style="background: rgba(168, 85, 247, 0.15); color: var(--purple-500); font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; border: 1px solid rgba(168, 85, 247, 0.3);">0 Customers</span>
+                                </div>
                             </div>
                             <div id="shemal-customers-list" style="max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding-right: 5px;">
                                 <!-- Dynamic Customers -->
@@ -737,7 +744,10 @@
                         <div class="salesman-customers-section" style="border-top: 1px solid var(--border-color); padding-top: 10px; font-size: 0.8rem;">
                             <div style="font-weight: 600; color: var(--amber-500); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
                                 <span>Assigned B2B Customers</span>
-                                <span class="badge" id="kaveen-cust-badge" style="background: rgba(245, 158, 11, 0.15); color: var(--amber-500); font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; border: 1px solid rgba(245, 158, 11, 0.3);">0 Customers</span>
+                                <div style="display: flex; gap: 5px; align-items: center;">
+                                    <button id="btn-export-kaveen" class="btn btn-secondary btn-icon-only" title="Export to Excel" style="height: 24px; width: 24px; min-width: 24px; padding: 0; font-size: 0.7rem;"><i class="fa-solid fa-file-excel"></i></button>
+                                    <span class="badge" id="kaveen-cust-badge" style="background: rgba(245, 158, 11, 0.15); color: var(--amber-500); font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: 600; border: 1px solid rgba(245, 158, 11, 0.3);">0 Customers</span>
+                                </div>
                             </div>
                             <div id="kaveen-customers-list" style="max-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding-right: 5px;">
                                 <!-- Dynamic Customers -->
@@ -1285,10 +1295,16 @@
                         <h1>Customer Directory</h1>
                         <p class="subtitle">Manage retail customers & corporate business profiles</p>
                     </div>
-                    <button class="btn btn-primary" id="btn-add-customer">
-                        <i class="fa-solid fa-user-plus"></i>
-                        <span>Register Customer</span>
-                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" id="btn-export-customers-page" style="background: var(--bg-card); border-color: var(--border-color); color: var(--text-main);">
+                            <i class="fa-solid fa-file-excel" style="color: #10b981;"></i>
+                            <span>Export Excel</span>
+                        </button>
+                        <button class="btn btn-primary" id="btn-add-customer">
+                            <i class="fa-solid fa-user-plus"></i>
+                            <span>Register Customer</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Search -->
@@ -1302,6 +1318,57 @@
                 <!-- Grid Layout for Customers -->
                 <div class="customers-grid" id="customers-grid-container">
                     <!-- Populated dynamically -->
+                </div>
+            </section>
+
+            <!-- Settings Tab -->
+            <!-- Reports Tab -->
+            <section class="tab-pane" id="tab-reports">
+                <div class="page-title-block flex-header">
+                    <div>
+                        <h1>Reports & Analytics</h1>
+                        <p class="subtitle">Monthly items sold and detailed reports</p>
+                    </div>
+                    <div class="header-actions" style="display:flex; gap:10px; align-items:center;">
+                        <input type="month" id="report-month-filter" class="form-input" style="width: auto; padding: 6px 12px; height: 38px;">
+                        <button class="btn btn-primary" onclick="generateMonthlyItemReport()">
+                            <i class="fa-solid fa-rotate"></i> Generate Report
+                        </button>
+                        <button class="btn btn-secondary" onclick="printMonthlyItemReport()">
+                            <i class="fa-solid fa-print"></i> Print
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card table-card" style="margin-top:20px;">
+                    <div class="card-header">
+                        <h3>Items Sold This Month</h3>
+                        <div class="filters-row">
+                            <select id="report-type-filter" style="background:var(--bg-input); border:1px solid var(--border-color); border-radius:6px; padding:6px 12px; font-size:0.8rem; color:var(--text-main); outline:none;">
+                                <option value="all">All Sales</option>
+                                <option value="retail">Retail Only</option>
+                                <option value="wholesale">Wholesale Only</option>
+                            </select>
+                        </div>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>SKU</th>
+                                <th>Category</th>
+                                <th>Qty Sold</th>
+                                <th>Total Sales Amount</th>
+                                <th>Total Profit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="report-items-tbody">
+                            <!-- Dynamic report rows -->
+                        </tbody>
+                        <tfoot id="report-items-tfoot">
+                            <!-- Totals -->
+                        </tfoot>
+                    </table>
                 </div>
             </section>
 
